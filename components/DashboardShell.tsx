@@ -14,7 +14,8 @@ import { BriefingModal } from "@/components/dashboard/briefing/BriefingModal";
 import { AsanaSettings } from "@/components/integration-settings/AsanaSettings";
 import { Ms365Settings } from "@/components/integration-settings/Ms365Settings";
 import { SparklesIcon } from "@/components/icons";
-import { useMs365Connection } from "@/hooks/useMs365Connection";
+import { useMs365Connection, useChatsSync } from "@/hooks/useMs365Connection";
+import { useInboxSync } from "@/hooks/useInboxSync";
 import { useAsanaConnection } from "@/hooks/useAsanaConnection";
 import { useSummaries } from "@/hooks/useSummaries";
 import { useBriefing } from "@/hooks/useBriefing";
@@ -41,6 +42,10 @@ export function DashboardShell({}: { searchParams?: { asana?: string; asana_erro
   const asana = useAsanaConnection();
   const briefing = useBriefing();
 
+  const isConnected = ms365.state.status === "connected";
+  const inbox = useInboxSync(isConnected);
+  const chats = useChatsSync(isConnected);
+
   const summaries = useSummaries({
     emailText: ms365.mailText,
     chatText: ms365.teamsText,
@@ -54,11 +59,10 @@ export function DashboardShell({}: { searchParams?: { asana?: string; asana_erro
     },
   });
 
-  const parsedEmails = parseEmails(ms365.mailText);
-  const parsedChats = parseChats(ms365.teamsText);
+  const parsedEmails = parseEmails(inbox.text);
+  const parsedChats = parseChats(chats.text);
 
-  const isConnected = ms365.state.status === "connected";
-  const isRefreshingAll = isRefreshing || ms365.mailSyncing || ms365.teamsSyncing || asana.syncing;
+  const isRefreshingAll = isRefreshing || inbox.syncing || chats.syncing || asana.syncing;
   const canRefreshAll = isConnected || asana.state.status === "connected";
 
   const handleRefresh = async () => {
@@ -66,8 +70,9 @@ export function DashboardShell({}: { searchParams?: { asana?: string; asana_erro
     setIsRefreshing(true);
     try {
       await refreshAllIntegrations({
-        ms365Connected: isConnected,
-        asanaConnected: asana.state.status === "connected",
+        refreshOutlookMail: inbox.refresh,
+        refreshTeams: chats.refresh,
+        refreshAsana: asana.refresh,
       });
     } finally {
       setIsRefreshing(false);
@@ -124,12 +129,22 @@ export function DashboardShell({}: { searchParams?: { asana?: string; asana_erro
                   emailSummary={summaries.email}
                   onToggleSummaryCollapsed={() => summaries.setEmailCollapsed(!summaries.email.collapsed)}
                   onOpenEmail={briefing.openForEmail}
+                  text={inbox.text}
+                  syncing={inbox.syncing}
+                  loadingMore={inbox.loadingMore}
+                  hasMore={inbox.hasMore}
+                  refresh={inbox.refresh}
+                  scrollRef={inbox.scrollRef}
+                  sentinelRef={inbox.sentinelRef}
                 />
                 <ChatColumn
                   ms365Connected={isConnected}
                   chatSummary={summaries.chat}
                   onToggleSummaryCollapsed={() => summaries.setChatCollapsed(!summaries.chat.collapsed)}
                   onOpenChat={briefing.openForChat}
+                  text={chats.text}
+                  syncing={chats.syncing}
+                  refresh={chats.refresh}
                 />
                 <TasksPanel
                   asanaStatus={asana.state.status}

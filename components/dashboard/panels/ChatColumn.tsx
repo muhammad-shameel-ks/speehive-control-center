@@ -6,7 +6,6 @@ import { EmptyConnect } from "@/components/dashboard/panels/EmptyConnect";
 import { EmptyState } from "@/components/dashboard/panels/EmptyState";
 import { LoadingSpinner } from "@/components/dashboard/panels/LoadingSpinner";
 import { InitialAvatar } from "@/components/dashboard/panels/InitialAvatar";
-import { useChatsSync } from "@/hooks/useMs365Connection";
 import { parseChats } from "@/lib/parser";
 import type { ParsedChat } from "@/lib/types/briefing";
 import ReactMarkdown from "react-markdown";
@@ -24,14 +23,19 @@ export function ChatColumn({
   chatSummary,
   onToggleSummaryCollapsed,
   onOpenChat,
+  text,
+  syncing,
+  refresh,
 }: {
   ms365Connected: boolean;
   chatSummary: ChatSummary;
   onToggleSummaryCollapsed: () => void;
   onOpenChat: (chat: ParsedChat) => void;
+  text: string | null;
+  syncing: boolean;
+  refresh: () => Promise<unknown>;
 }) {
-  const chats = useChatsSync(ms365Connected);
-  const parsedChats = parseChats(chats.text);
+  const parsedChats = parseChats(text);
 
   return (
     <div className="flex flex-col gap-4" style={{ height: "calc(100vh - 200px)", minHeight: 500 }}>
@@ -56,11 +60,11 @@ export function ChatColumn({
               </button>
             )}
             <button
-              onClick={chats.refresh}
-              disabled={chats.syncing || !ms365Connected}
+              onClick={() => refresh()}
+              disabled={syncing || !ms365Connected}
               className="text-[11px] font-semibold text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"
             >
-              {chats.syncing ? "Syncing…" : "Sync"}
+              {syncing ? "Syncing…" : "Sync"}
             </button>
           </div>
         </div>
@@ -98,7 +102,7 @@ export function ChatColumn({
                 window.location.href = "/api/ms365/login";
               }}
             />
-          ) : chats.syncing ? (
+          ) : syncing ? (
             <LoadingSpinner />
           ) : parsedChats.length > 0 ? (
             parsedChats.map((chat) => (

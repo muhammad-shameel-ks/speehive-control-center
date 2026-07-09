@@ -4,11 +4,11 @@ import { EmptyConnect } from "@/components/dashboard/panels/EmptyConnect";
 import { EmptyState } from "@/components/dashboard/panels/EmptyState";
 import { LoadingSpinner } from "@/components/dashboard/panels/LoadingSpinner";
 import { InitialAvatar } from "@/components/dashboard/panels/InitialAvatar";
-import { useInboxSync } from "@/hooks/useInboxSync";
 import { parseEmails } from "@/lib/parser";
 import type { ParsedEmail } from "@/lib/types/briefing";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import type { RefObject } from "react";
 
 type EmailSummary = {
   text: string | null;
@@ -22,14 +22,26 @@ export function EmailPanel({
   emailSummary,
   onToggleSummaryCollapsed,
   onOpenEmail,
+  text,
+  syncing,
+  loadingMore,
+  hasMore,
+  refresh,
+  scrollRef,
+  sentinelRef,
 }: {
   ms365Connected: boolean;
   emailSummary: EmailSummary;
   onToggleSummaryCollapsed: () => void;
   onOpenEmail: (email: ParsedEmail) => void;
+  text: string | null;
+  syncing: boolean;
+  loadingMore: boolean;
+  hasMore: boolean;
+  refresh: () => Promise<unknown>;
+  scrollRef: RefObject<HTMLDivElement | null>;
+  sentinelRef: RefObject<HTMLDivElement | null>;
 }) {
-  const inbox = useInboxSync(ms365Connected);
-  const { text, syncing, loadingMore, hasMore, refresh, scrollRef, sentinelRef } = inbox;
   const parsedEmails = parseEmails(text);
 
   return (
@@ -56,7 +68,7 @@ export function EmailPanel({
             </button>
           )}
           <button
-            onClick={refresh}
+            onClick={() => refresh()}
             disabled={syncing || !ms365Connected}
             className="text-[11px] font-semibold text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"
           >

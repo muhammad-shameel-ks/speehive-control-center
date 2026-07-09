@@ -62,6 +62,13 @@ export function useInboxSync(enabled: boolean) {
   }, [loadingMore, hasMore, syncing, skip]);
 
   useEffect(() => {
+    if (enabled) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      refresh();
+    }
+  }, [enabled, refresh]);
+
+  useEffect(() => {
     const sentinel = sentinelRef.current;
     const root = scrollRef.current;
     if (!sentinel || !root || !hasMore) return;

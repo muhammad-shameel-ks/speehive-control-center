@@ -97,5 +97,12 @@ export function useChatsSync(enabled: boolean) {
     }
   }, [enabled]);
 
+  useEffect(() => {
+    if (enabled) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      refresh();
+    }
+  }, [enabled, refresh]);
+
   return { text, syncing, refresh };
 }
