@@ -1,0 +1,18 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "searxng": {
+      "type": "local",
+      "command": ["node", "/home/shameel/searxng-mcp/server.js"],
+      "enabled": true,
+      "env": {
+        "SEARXNG_BASE": "http://localhost:8080"
+      }
+    },
+    "supabase": {
+      "type": "remote",
+      "url": "http://localhost:8000/mcp",
+      "enabled": true
+    }
+  }
+}
