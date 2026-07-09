@@ -10,7 +10,6 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - `lib/` — server-only helpers, types, OAuth, parser, integrations client.
 - `hooks/` — client-side custom hooks (one per concern: `useMs365Connection`, `useSummaries`, etc.).
 - `components/` — client components, organised by feature.
-- `supabase-project/` — self-contained local Supabase stack via Docker Compose. **Not** part of the Next.js app — see gotchas below.
 - `.agents/skills/` — repo-local agent skills. Locked versions in `skills-lock.json`.
 
 # Dashboard feature layout
@@ -57,35 +56,16 @@ Shared OAuth helpers live in `lib/oauth/pkce.ts`. Typed API wrappers live in `li
 - The UI calls `get_my_tasks` via the official SDK (`@modelcontextprotocol/sdk`) using `StreamableHTTPClientTransport`. The bearer token is passed via `requestInit.headers.Authorization`; no `OAuthClientProvider` is used because we manage the OAuth flow ourselves.
 - `cookies()` in Next.js 16 is **async** — `await cookies()` everywhere.
 
-# Turbopack blocker: unreadable Supabase data dir
-
-`next dev` (Turbopack) walks the project root and crashes with a generic "An unexpected Turbopack error occurred" overlay when it hits a permission-denied path. The current offender is:
-
-```
-supabase-project/volumes/db/data    # owned by syslog:root, mode 0700
-```
-
-Symptom in the page payload: `TurbopackInternalError: Failed to write app endpoint /page ... Unable to watch ... Permission denied (os error 13)`.
-
-Fix one of:
-- `sudo chmod -R a+rX supabase-project/volumes/db/data` (or `chown -R $USER supabase-project/volumes/db/data`).
-- Or, if you don't need the local Supabase DB running, stop the container that mounted it.
-- Workaround: run `next dev` with a different `cwd` (e.g. a parent that excludes `supabase-project`) until you fix the perms.
-
-Don't waste time on Turbopack config — there's no documented option to exclude a sibling directory from the watcher.
-
 # Verification commands
 
 - `npm run dev` — Next.js 16 + Turbopack on port 3000 (falls back to next free).
-- `npm run lint` — runs `eslint` over the whole repo. Will fail with `EACCES` on the same `supabase-project/volumes/db/data` path; scope it:
-  - `npx eslint components app lib hooks`
-- `npx tsc --noEmit -p tsconfig.check.json` — scoped to exclude `supabase-project` and `.next`.
+- `npm run lint` — runs `eslint` over the whole repo.
+- `npx tsc --noEmit -p tsconfig.check.json` — type-checks the codebase.
 - No tests configured.
 
 # MCP servers (opencode.json)
 
 - `searxng` — local proxy at `http://localhost:8080`.
-- `supabase` — local Supabase MCP at `http://localhost:8000/mcp`. Requires the Supabase stack in `supabase-project/` to be running.
 
 # Conventions worth knowing
 

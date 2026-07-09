@@ -8,11 +8,6 @@
       "env": {
         "SEARXNG_BASE": "http://localhost:8080"
       }
-    },
-    "supabase": {
-      "type": "remote",
-      "url": "http://localhost:8000/mcp",
-      "enabled": true
     }
   }
 }
