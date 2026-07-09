@@ -1,4 +1,4 @@
-function decodeHtml(str: string): string {
+export function decodeHtml(str: string): string {
   return str
     .replace(/&nbsp;/g, " ")
     .replace(/&amp;/g, "&")
@@ -253,6 +253,34 @@ export function parseChats(text: string | null): ParsedChat[] {
     lastMessage: text.slice(0, 150),
     raw: text
   }];
+}
+
+export function extractMcpTextContent(result: unknown): string {
+  if (!result || typeof result !== "object") return "";
+  const r = result as { content?: unknown };
+  if (!Array.isArray(r.content)) return "";
+  return r.content
+    .filter((item): item is { type: "text"; text: string } =>
+      typeof item === "object" &&
+      item !== null &&
+      (item as { type?: unknown }).type === "text" &&
+      typeof (item as { text?: unknown }).text === "string"
+    )
+    .map((item) => item.text)
+    .join("");
+}
+
+type AsanaTaskShape = { gid: string; name: string; completed: boolean; due_on?: string | null; workspace?: { gid: string } };
+
+export function parseAsanaTasksFromResult(result: unknown): AsanaTaskShape[] | null {
+  const text = extractMcpTextContent(result);
+  if (!text) return null;
+  try {
+    const parsed = JSON.parse(text) as { data?: AsanaTaskShape[] };
+    return Array.isArray(parsed.data) ? parsed.data : null;
+  } catch {
+    return null;
+  }
 }
 
 export function parseEvents(text: string | null): ParsedEvent[] {

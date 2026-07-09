@@ -1,25 +1,9 @@
 import { NextResponse } from "next/server";
-import { createHash, randomBytes } from "node:crypto";
+import { makePkcePair, randomState } from "@/lib/oauth/pkce";
 import { getSession, updateSession } from "@/lib/session";
 
 const ASANA_AUTH_URL = "https://app.asana.com/-/oauth_authorize";
 const ASANA_MCP_RESOURCE = "https://mcp.asana.com/v2";
-
-function base64UrlEncode(buf: Buffer): string {
-  return buf
-    .toString("base64")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
-}
-
-function makePkcePair(): { verifier: string; challenge: string } {
-  const verifier = base64UrlEncode(randomBytes(32));
-  const challenge = base64UrlEncode(
-    createHash("sha256").update(verifier).digest(),
-  );
-  return { verifier, challenge };
-}
 
 export async function GET(request: Request) {
   const { sid } = await getSession();
@@ -33,7 +17,7 @@ export async function GET(request: Request) {
   }
 
   const { verifier, challenge } = makePkcePair();
-  const state = base64UrlEncode(randomBytes(16));
+  const state = randomState();
   await updateSession(sid, { codeVerifier: verifier, state });
 
   const url = new URL(request.url);
