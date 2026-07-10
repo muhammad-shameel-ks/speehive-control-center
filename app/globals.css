@@ -94,49 +94,49 @@
 
 /* ─── DARK MODE ───────────────────────────────────────────────────────────── */
 .dark {
-  /* Deep warm-neutral: very slight warm cast, avoids the cold zinc look */
-  --background: oklch(0.080 0.010 55);
-  --foreground: oklch(0.930 0.008 55);
+  /* Elegant deep slate-blue: modern dark palette, excellent contrast and eye comfort */
+  --background: oklch(0.145 0.012 235);
+  --foreground: oklch(0.960 0.005 235);
 
-  --card: oklch(0.115 0.012 55);
-  --card-foreground: oklch(0.930 0.008 55);
+  --card: oklch(0.185 0.012 235);
+  --card-foreground: oklch(0.960 0.005 235);
 
-  --popover: oklch(0.115 0.012 55);
-  --popover-foreground: oklch(0.930 0.008 55);
+  --popover: oklch(0.185 0.012 235);
+  --popover-foreground: oklch(0.960 0.005 235);
 
-  /* Primary = SpeeHive orange, brightened for dark bg */
+  /* Primary = SpeeHive orange, complement to slate-blue, vibrant but soft on dark bg */
   --primary: oklch(0.76 0.188 52);
-  --primary-foreground: oklch(0.095 0.010 55);
+  --primary-foreground: oklch(0.120 0.015 235);
 
-  --secondary: oklch(0.158 0.014 55);
-  --secondary-foreground: oklch(0.920 0.008 55);
+  --secondary: oklch(0.220 0.015 235);
+  --secondary-foreground: oklch(0.960 0.005 235);
 
-  --muted: oklch(0.158 0.014 55);
-  --muted-foreground: oklch(0.525 0.030 55);
+  --muted: oklch(0.200 0.015 235);
+  --muted-foreground: oklch(0.700 0.015 235);
 
-  --accent: oklch(0.158 0.014 55);
-  --accent-foreground: oklch(0.920 0.008 55);
+  --accent: oklch(0.220 0.015 235);
+  --accent-foreground: oklch(0.980 0.005 235);
 
-  --destructive: oklch(0.660 0.210 24);
+  --destructive: oklch(0.620 0.180 25);
 
-  --border: oklch(0.192 0.016 55);
-  --input: oklch(0.192 0.016 55);
+  --border: oklch(0.260 0.015 235);
+  --input: oklch(0.260 0.015 235);
   --ring: oklch(0.76 0.188 52);
 
-  --sidebar: oklch(0.095 0.012 55);
-  --sidebar-foreground: oklch(0.930 0.008 55);
+  --sidebar: oklch(0.110 0.015 235);
+  --sidebar-foreground: oklch(0.920 0.008 235);
   --sidebar-primary: oklch(0.76 0.188 52);
-  --sidebar-primary-foreground: oklch(0.095 0.010 55);
-  --sidebar-accent: oklch(0.158 0.014 55);
-  --sidebar-accent-foreground: oklch(0.920 0.008 55);
-  --sidebar-border: oklch(0.162 0.014 55);
+  --sidebar-primary-foreground: oklch(0.110 0.015 235);
+  --sidebar-accent: oklch(0.185 0.012 235);
+  --sidebar-accent-foreground: oklch(0.960 0.005 235);
+  --sidebar-border: oklch(0.160 0.015 235);
   --sidebar-ring: oklch(0.76 0.188 52);
 
-  /* SpeeHive logo panel accent colors (slightly desaturated for dark context) */
-  --panel-email: #5B9FD4;
-  --panel-chat: #3CBFAC;
-  --panel-tasks: #60C83A;
-  --panel-calendar: #C5DE18;
+  /* SpeeHive logo panel accent colors (tuned to pop cleanly on the new dark backdrop) */
+  --panel-email: #6BA9E0;
+  --panel-chat: #4DCBB8;
+  --panel-tasks: #72D94B;
+  --panel-calendar: #D5EE28;
 }
 
 /* ─── BASE ────────────────────────────────────────────────────────────────── */
