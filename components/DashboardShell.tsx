@@ -41,7 +41,7 @@ export function DashboardShell({}: { searchParams?: { asana?: string; asana_erro
   const [userEmail, setUserEmail] = useState<string | undefined>();
 
   useEffect(() => {
-    createClient().auth.getUser().then(({ data }) => {
+    createClient().auth.getUser().then(({ data }: { data: { user: { email?: string } | null } }) => {
       setUserEmail(data.user?.email ?? undefined);
     });
   }, []);
