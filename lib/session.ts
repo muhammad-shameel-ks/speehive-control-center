@@ -1,29 +1,6 @@
 import { cookies } from "next/headers";
-import { randomBytes } from "node:crypto";
 
-const COOKIE_NAME = "sh_sid";
-const COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
-
-export type GoogleUser = {
-  sub: string;
-  email: string;
-  name?: string;
-  picture?: string;
-};
-
-export type GoogleServerTokens = {
-  accessToken: string;
-  refreshToken?: string;
-  expiresAt: number;
-  scope: string;
-};
-
-export type GooglePendingAuth = {
-  serverId: string;
-  state: string;
-  codeVerifier: string;
-  nextServerId?: string;
-};
+const SID_COOKIE = "sh_sid";
 
 export type Ms365User = {
   id?: string;
@@ -41,11 +18,7 @@ export type SessionData = {
   expiresAt?: number;
   state?: string;
   codeVerifier?: string;
-  // Google — per-MCP-server tokens (keyed by serverId: gmail/drive/calendar/chat/people)
-  googleTokens?: Record<string, GoogleServerTokens>;
-  googleUser?: GoogleUser;
-  googlePending?: GooglePendingAuth;
-  // Microsoft 365 — Work IQ MCP
+  // Microsoft 365
   ms365ClientId?: string;
   ms365TenantId?: string;
   ms365AccessToken?: string;
@@ -56,50 +29,28 @@ export type SessionData = {
   ms365User?: Ms365User;
 };
 
-const globalForSession = globalThis as unknown as {
-  sessionStore?: Map<string, SessionData>;
-};
-
-const store = globalForSession.sessionStore ?? new Map<string, SessionData>();
-if (process.env.NODE_ENV !== "production") {
-  globalForSession.sessionStore = store;
-}
-
-function generateSid(): string {
-  return randomBytes(32).toString("hex");
-}
+const store = new Map<string, SessionData>();
 
 export async function getSession(): Promise<{ sid: string; data: SessionData }> {
   const cookieStore = await cookies();
-  const existing = cookieStore.get(COOKIE_NAME);
-  if (existing) {
-    const data = store.get(existing.value) ?? {};
-    return { sid: existing.value, data };
-  }
-  const sid = generateSid();
-  store.set(sid, {});
-  cookieStore.set(COOKIE_NAME, sid, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: COOKIE_MAX_AGE,
-  });
-  return { sid, data: {} };
+  const sid = cookieStore.get(SID_COOKIE)?.value ?? "";
+  const data = sid ? (store.get(sid) ?? {}) : {};
+  return { sid, data };
 }
 
 export async function updateSession(
   sid: string,
   patch: Partial<SessionData>,
 ): Promise<SessionData> {
-  const current = store.get(sid) ?? {};
-  const next = { ...current, ...patch };
-  store.set(sid, next);
+  const current = sid ? (store.get(sid) ?? {}) : {};
+  const next: SessionData = { ...current, ...patch };
+  for (const key of Object.keys(patch) as (keyof SessionData)[]) {
+    if (next[key] === undefined) delete next[key];
+  }
+  if (sid) store.set(sid, next);
   return next;
 }
 
 export async function clearSession(sid: string): Promise<void> {
-  store.delete(sid);
-  const cookieStore = await cookies();
-  cookieStore.delete(COOKIE_NAME);
+  if (sid) store.delete(sid);
 }

@@ -33,7 +33,7 @@ export function buildAuthUrl(opts: {
   url.searchParams.set("response_mode", "query");
   url.searchParams.set(
     "scope",
-    "openid profile email offline_access",
+    "openid profile email offline_access Mail.Read Chat.Read",
   );
   url.searchParams.set("state", opts.state);
   url.searchParams.set("code_challenge", opts.codeChallenge);
@@ -60,7 +60,7 @@ export async function exchangeCodeForTokens(
     code,
     redirect_uri: redirectUri,
     code_verifier: codeVerifier,
-    scope: "openid profile email offline_access",
+    scope: "openid profile email offline_access Mail.Read Chat.Read",
   });
 
   const res = await fetch(tokenUrl, {
@@ -96,7 +96,7 @@ export async function refreshAccessToken(
     grant_type: "refresh_token",
     client_id: config.clientId,
     refresh_token: refreshToken,
-    scope: "openid profile email offline_access",
+    scope: "openid profile email offline_access Mail.Read Chat.Read",
   });
 
   const res = await fetch(tokenUrl, {

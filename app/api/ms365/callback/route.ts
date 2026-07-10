@@ -21,10 +21,7 @@ export async function GET(request: Request) {
   }
 
   if (!code || !state) {
-    return NextResponse.json(
-      { error: "Missing code or state" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Missing code or state" }, { status: 400 });
   }
 
   if (!data.ms365State || data.ms365State !== state) {
