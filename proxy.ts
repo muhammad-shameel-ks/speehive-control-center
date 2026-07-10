@@ -1,22 +1,46 @@
+import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { randomUUID } from "node:crypto";
 
-const SID_COOKIE = "sh_sid";
-const COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
+export async function proxy(request: NextRequest) {
+  let supabaseResponse = NextResponse.next({ request });
 
-export function proxy(request: NextRequest) {
-  if (request.cookies.get(SID_COOKIE)) {
-    return NextResponse.next();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value),
+          );
+          supabaseResponse = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options),
+          );
+        },
+      },
+    },
+  );
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const user = session?.user ?? null;
+
+  const { pathname } = request.nextUrl;
+  const isPublic =
+    pathname === "/login" ||
+    pathname.startsWith("/auth/") ||
+    pathname.startsWith("/api/");
+
+  if (!user && !isPublic) {
+    return NextResponse.redirect(new URL("/login", request.url));
   }
-  const response = NextResponse.next();
-  response.cookies.set(SID_COOKIE, randomUUID(), {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: COOKIE_MAX_AGE,
-  });
-  return response;
+
+  return supabaseResponse;
 }
 
 export const config = {

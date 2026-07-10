@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
   }
 
   const url = new URL(request.url);
-  const { data, sid } = await getSession();
+  const { data } = await getSession();
 
   if (data.ms365AccessToken) {
     return NextResponse.redirect(new URL("/?ms365=connected", url.origin));
@@ -26,9 +26,7 @@ export async function GET(request: NextRequest) {
   const { verifier, challenge } = makePkcePair();
   const state = randomState();
 
-  await updateSession(sid, {
-    ms365ClientId: config.clientId,
-    ms365TenantId: config.tenantId,
+  await updateSession({
     ms365State: state,
     ms365CodeVerifier: verifier,
   });

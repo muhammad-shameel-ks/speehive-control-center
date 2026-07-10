@@ -1,3 +1,4 @@
+import { getAsanaServerConfig } from "@/lib/asana-server-config";
 import { refreshAccessToken } from "@/lib/asana-mcp";
 import { getSession, updateSession } from "@/lib/session";
 
@@ -8,15 +9,14 @@ export type AsanaAuth =
   | { ok: false; reason: "unconfigured" | "unauthorized"; message?: string };
 
 export async function getValidAsanaToken(): Promise<AsanaAuth> {
-  const { data, sid } = await getSession();
+  const { data } = await getSession();
 
   if (!data.accessToken || !data.refreshToken) {
     return { ok: false, reason: "unauthorized" };
   }
 
-  const clientId = process.env.ASANA_CLIENT_ID;
-  const clientSecret = process.env.ASANA_CLIENT_SECRET;
-  if (!clientId || !clientSecret) {
+  const config = await getAsanaServerConfig();
+  if (!config) {
     return { ok: false, reason: "unconfigured" };
   }
 
@@ -25,11 +25,8 @@ export async function getValidAsanaToken(): Promise<AsanaAuth> {
 
   if (needsRefresh) {
     try {
-      const refreshed = await refreshAccessToken(data.refreshToken, {
-        clientId,
-        clientSecret,
-      });
-      await updateSession(sid, {
+      const refreshed = await refreshAccessToken(data.refreshToken, config);
+      await updateSession({
         accessToken: refreshed.accessToken,
         refreshToken: refreshed.refreshToken,
         expiresAt: refreshed.expiresAt,

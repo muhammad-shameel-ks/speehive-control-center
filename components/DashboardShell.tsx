@@ -14,6 +14,7 @@ import { BriefingModal } from "@/components/dashboard/briefing/BriefingModal";
 import { AsanaSettings } from "@/components/integration-settings/AsanaSettings";
 import { Ms365Settings } from "@/components/integration-settings/Ms365Settings";
 import { SparklesIcon } from "@/components/icons";
+import { createClient } from "@/lib/supabase/client";
 import { useMs365Connection, useChatsSync } from "@/hooks/useMs365Connection";
 import { useInboxSync } from "@/hooks/useInboxSync";
 import { useAsanaConnection } from "@/hooks/useAsanaConnection";
@@ -37,6 +38,13 @@ export function DashboardShell({}: { searchParams?: { asana?: string; asana_erro
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [chatInitialInput, setChatInitialInput] = useState("");
+  const [userEmail, setUserEmail] = useState<string | undefined>();
+
+  useEffect(() => {
+    createClient().auth.getUser().then(({ data }) => {
+      setUserEmail(data.user?.email ?? undefined);
+    });
+  }, []);
 
   const ms365 = useMs365Connection();
   const asana = useAsanaConnection();
@@ -107,6 +115,7 @@ export function DashboardShell({}: { searchParams?: { asana?: string; asana_erro
           onRefresh={handleRefresh}
           resolvedTheme={resolvedTheme}
           onToggleTheme={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+          userEmail={userEmail}
         />
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4">

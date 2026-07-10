@@ -9,11 +9,32 @@ import {
 } from "ai";
 import { mimoV25 } from "@/lib/ai-provider";
 import { buildAsanaToolSet } from "@/lib/asana-tools";
+import { rateLimitFromCookie } from "@/lib/rate-limit";
 import { getValidAsanaToken } from "@/lib/session-helpers";
 
 export const maxDuration = 60;
 
 export async function POST(req: Request) {
+  const cookie = req.headers.get("cookie") ?? "";
+  const sidMatch = /(?:^|;\s*)sh_session=([^;]*)/.exec(cookie);
+  const sid = sidMatch ? sidMatch[1] : undefined;
+  const ip =
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    req.headers.get("x-real-ip");
+  const rl = rateLimitFromCookie(sid, ip, { limit: 20, windowMs: 60_000 });
+  if (!rl.allowed) {
+    return new Response(
+      JSON.stringify({ error: "Rate limit exceeded. Please slow down." }),
+      {
+        status: 429,
+        headers: {
+          "Content-Type": "application/json",
+          "Retry-After": String(Math.ceil((rl.resetAt - Date.now()) / 1000)),
+        },
+      },
+    );
+  }
+
   const { messages }: { messages: UIMessage[] } = await req.json();
 
   const auth = await getValidAsanaToken();

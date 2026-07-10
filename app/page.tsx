@@ -3,8 +3,6 @@ import { DashboardShell } from "@/components/DashboardShell";
 type SearchParams = Promise<{
   asana?: string;
   asana_error?: string;
-  google?: string;
-  google_error?: string;
   ms365?: string;
   ms365_error?: string;
 }>;

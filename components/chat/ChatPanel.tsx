@@ -2,9 +2,10 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type DynamicToolUIPart, type UIMessage } from "ai";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { useChatHistory } from "@/hooks/useChatHistory";
 
 function isDynamicToolPart(
   part: UIMessage["parts"][number],
@@ -191,19 +192,30 @@ function MessageBubble({ message, theme = "dark" }: { message: UIMessage; theme?
   );
 }
 
-export function ChatPanel({ 
-  theme = "dark", 
-  initialInput = "", 
-  onInputSetUsed 
-}: { 
-  theme?: "dark" | "light"; 
-  initialInput?: string; 
-  onInputSetUsed?: () => void; 
+export function ChatPanel({
+  theme = "dark",
+  initialInput = "",
+  onInputSetUsed
+}: {
+  theme?: "dark" | "light";
+  initialInput?: string;
+  onInputSetUsed?: () => void;
 }) {
-  const { messages, sendMessage, status, error, stop } = useChat({
+  const { messages: initialHistory, persist, clear, hasHistory } = useChatHistory();
+  const { messages, sendMessage, status, error, stop, setMessages } = useChat({
     id: "speehive-chat",
     transport: new DefaultChatTransport({ api: "/api/chat" }),
+    messages: initialHistory,
   });
+
+  useEffect(() => {
+    persist(messages);
+  }, [messages, persist]);
+
+  const onClear = useCallback(() => {
+    clear();
+    setMessages([]);
+  }, [clear, setMessages]);
 
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -251,13 +263,28 @@ export function ChatPanel({
     <div className={`flex h-full flex-col transition-colors duration-200 ${
       isDark ? "bg-zinc-950 text-zinc-100" : "bg-white text-zinc-900"
     }`}>
-      <div className={`border-b px-6 py-4 ${
+      <div className={`flex items-center justify-between border-b px-6 py-4 ${
         isDark ? "border-zinc-850 bg-zinc-900/20" : "border-zinc-200 bg-zinc-50/50"
       }`}>
-        <p className={`text-sm font-semibold ${isDark ? "text-zinc-100" : "text-zinc-800"}`}>SpeeHive Assistant</p>
-        <p className={`text-xs mt-0.5 ${isDark ? "text-zinc-550" : "text-zinc-500"}`}>
-          Ask about your tasks, emails, and workspace
-        </p>
+        <div>
+          <p className={`text-sm font-semibold ${isDark ? "text-zinc-100" : "text-zinc-800"}`}>SpeeHive Assistant</p>
+          <p className={`text-xs mt-0.5 ${isDark ? "text-zinc-550" : "text-zinc-500"}`}>
+            Ask about your tasks, emails, and workspace
+          </p>
+        </div>
+        {hasHistory && (
+          <button
+            type="button"
+            onClick={onClear}
+            className={`rounded border px-2.5 py-1 text-[11px] font-medium transition-colors ${
+              isDark
+                ? "border-zinc-800 text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-200"
+                : "border-zinc-200 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700"
+            }`}
+          >
+            Clear
+          </button>
+        )}
       </div>
  
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-6 py-6 scrollbar-thin">

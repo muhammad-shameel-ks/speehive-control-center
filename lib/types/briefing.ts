@@ -1,4 +1,4 @@
-import type { ParsedEmail, ParsedChat, ParsedEvent, ChatMessage } from "@/lib/parser";
+import type { ParsedEmail, ParsedChat, ChatMessage } from "@/lib/parser";
 
 export type BriefingTab = "mail" | "teams" | "asana";
 
@@ -19,4 +19,4 @@ export const SOURCE_TO_TAB: Record<SummarySource, BriefingTab> = {
 };
 
 export type BriefingMessage = ChatMessage;
-export { type ParsedEmail, type ParsedChat, type ParsedEvent };
+export { type ParsedEmail, type ParsedChat };

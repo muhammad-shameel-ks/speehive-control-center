@@ -12,7 +12,7 @@ export async function GET(request: Request) {
   const state = url.searchParams.get("state");
   const error = url.searchParams.get("error");
 
-  const { data, sid } = await getSession();
+  const { data } = await getSession();
 
   if (error) {
     return NextResponse.redirect(
@@ -55,7 +55,7 @@ export async function GET(request: Request) {
       }
     }
 
-    await updateSession(sid, {
+    await updateSession({
       ms365AccessToken: tokens.accessToken,
       ms365RefreshToken: tokens.refreshToken,
       ms365ExpiresAt: tokens.expiresAt,

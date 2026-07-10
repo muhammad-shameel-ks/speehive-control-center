@@ -8,7 +8,7 @@ const csp = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: https: blob:",
   "font-src 'self' data:",
-  isProd ? "connect-src 'self' https://mcp.asana.com https://graph.microsoft.com https://login.microsoftonline.com https://app.asana.com https://opencode.ai wss:" : "connect-src 'self' https://mcp.asana.com https://graph.microsoft.com https://login.microsoftonline.com https://app.asana.com https://opencode.ai ws: wss:",
+  isProd ? "connect-src 'self' https://mcp.asana.com https://graph.microsoft.com https://login.microsoftonline.com https://app.asana.com https://opencode.ai https://zyoswiuptsyafnnvbgox.supabase.co wss://zyoswiuptsyafnnvbgox.supabase.co wss:" : "connect-src 'self' https://mcp.asana.com https://graph.microsoft.com https://login.microsoftonline.com https://app.asana.com https://opencode.ai https://zyoswiuptsyafnnvbgox.supabase.co ws: wss:",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getAsanaServerConfig } from "@/lib/asana-server-config";
 import { exchangeCodeForTokens } from "@/lib/asana-mcp";
 import { getSession, updateSession } from "@/lib/session";
 
@@ -8,7 +9,7 @@ export async function GET(request: Request) {
   const state = url.searchParams.get("state");
   const error = url.searchParams.get("error");
 
-  const { data, sid } = await getSession();
+  const { data } = await getSession();
 
   if (error) {
     return NextResponse.redirect(
@@ -27,10 +28,9 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "State mismatch" }, { status: 400 });
   }
 
-  const clientId = process.env.ASANA_CLIENT_ID;
-  const clientSecret = process.env.ASANA_CLIENT_SECRET;
+  const config = await getAsanaServerConfig();
 
-  if (!clientId || !clientSecret || !data.codeVerifier) {
+  if (!config || !data.codeVerifier) {
     return NextResponse.json(
       { error: "Missing credentials or PKCE verifier" },
       { status: 400 },
@@ -44,9 +44,9 @@ export async function GET(request: Request) {
       code,
       data.codeVerifier,
       redirectUri,
-      { clientId, clientSecret },
+      config,
     );
-    await updateSession(sid, {
+    await updateSession({
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
       expiresAt: tokens.expiresAt,

@@ -1,7 +1,9 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useClock } from "@/hooks/useClock";
 import { RefreshIcon, SunIcon, MoonIcon } from "@/components/icons";
+import { createClient } from "@/lib/supabase/client";
 import type { DashboardTab } from "@/components/dashboard/Sidebar";
 
 export function Header({
@@ -11,6 +13,7 @@ export function Header({
   onRefresh,
   resolvedTheme,
   onToggleTheme,
+  userEmail,
 }: {
   activeTab: DashboardTab;
   isRefreshing: boolean;
@@ -18,8 +21,17 @@ export function Header({
   onRefresh: () => void;
   resolvedTheme: "dark" | "light";
   onToggleTheme: () => void;
+  userEmail?: string;
 }) {
+  const router = useRouter();
   const currentTime = useClock();
+
+  async function handleSignOut() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  }
 
   return (
     <header className="flex h-[52px] shrink-0 items-center justify-between border-b border-border bg-background/95 backdrop-blur-sm px-5">
@@ -70,12 +82,18 @@ export function Header({
 
         <div className="flex items-center gap-2">
           <div className="h-7 w-7 rounded-full bg-primary/15 border border-primary/30 text-[12px] font-bold text-primary flex items-center justify-center shrink-0">
-            S
+            {userEmail?.[0]?.toUpperCase() ?? "U"}
           </div>
           <div className="hidden sm:block leading-tight">
-            <div className="text-[13px] font-semibold text-foreground">Shameel</div>
-            <div className="text-[10px] text-muted-foreground">IT Lead Manager</div>
+            <div className="text-[13px] font-semibold text-foreground truncate max-w-[140px]">{userEmail ?? "—"}</div>
           </div>
+          <button
+            onClick={handleSignOut}
+            className="ml-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+            title="Sign out"
+          >
+            Sign out
+          </button>
         </div>
       </div>
     </header>

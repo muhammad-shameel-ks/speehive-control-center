@@ -170,7 +170,7 @@ export async function GET(req: NextRequest, ctx: Ctx) {
   }
 
   const panel = MS365_PANELS[tool as keyof typeof MS365_PANELS];
-  const { data, sid } = await getSession();
+  const { data } = await getSession();
 
   if (!data.ms365AccessToken) {
     return NextResponse.json({ state: "unauthorized" });
@@ -194,7 +194,7 @@ export async function GET(req: NextRequest, ctx: Ctx) {
         config,
       );
       accessToken = refreshed.accessToken;
-      await updateSession(sid, {
+      await updateSession({
         ms365AccessToken: refreshed.accessToken,
         ms365RefreshToken: refreshed.refreshToken,
         ms365ExpiresAt: refreshed.expiresAt,

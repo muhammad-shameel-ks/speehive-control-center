@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
-import { getSession, updateSession } from "@/lib/session";
+import { updateSession } from "@/lib/session";
 
 export async function POST() {
-  const { sid } = await getSession();
-  await updateSession(sid, {
+  await updateSession({
     ms365AccessToken: undefined,
     ms365RefreshToken: undefined,
     ms365ExpiresAt: undefined,
