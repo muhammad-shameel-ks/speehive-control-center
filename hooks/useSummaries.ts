@@ -103,9 +103,9 @@ export function useSummaries(opts: {
     if (!hasGlobalInputs) return;
 
     // Wait for active feeds to finish their individual summaries before generating the global briefing
-    const emailLoading = emailText && emailText.length > MIN_CONTENT_LENGTH && !email.text;
-    const chatLoading = chatText && chatText.length > MIN_CONTENT_LENGTH && !chat.text;
-    const tasksLoading = tasks && tasks.length > 0 && !tasksSummary.text;
+    const emailLoading = emailText && emailText.length > MIN_CONTENT_LENGTH && !email.text && !email.error;
+    const chatLoading = chatText && chatText.length > MIN_CONTENT_LENGTH && !chat.text && !chat.error;
+    const tasksLoading = tasks && tasks.length > 0 && !tasksSummary.text && !tasksSummary.error;
     if (emailLoading || chatLoading || tasksLoading) {
       return;
     }
@@ -118,13 +118,29 @@ export function useSummaries(opts: {
     if (email.text) parts.push(`[MAIL] ${email.text}`);
     if (chat.text) parts.push(`[TEAMS] ${chat.text}`);
     if (tasksSummary.text) parts.push(`[ASANA] ${tasksSummary.text}`);
-    if (parts.length === 0) return;
+    
+    if (parts.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setGlobalLoading(false);
+      return;
+    }
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setGlobalLoading(true);
     const timer = setTimeout(() => run("global", parts.join("\n\n")), GLOBAL_DEBOUNCE_MS);
     return () => clearTimeout(timer);
-  }, [email.text, chat.text, tasksSummary.text, hasGlobalInputs, emailText, chatText, tasks, run]);
+  }, [
+    email.text,
+    chat.text,
+    tasksSummary.text,
+    email.error,
+    chat.error,
+    tasksSummary.error,
+    hasGlobalInputs,
+    emailText,
+    chatText,
+    tasks,
+    run
+  ]);
 
   const retryEmail = useCallback(() => {
     if (emailText && emailText.length > MIN_CONTENT_LENGTH) {
@@ -168,20 +184,31 @@ export function useSummaries(opts: {
     tasksFingerprintRef.current = "";
     globalFingerprintRef.current = "";
 
+    setGlobalText(null);
+    setGlobalLoading(true);
+
     if (emailText && emailText.length > MIN_CONTENT_LENGTH) {
-      setEmail((s) => ({ ...s, loading: true, error: false }));
+      setEmail({ text: null, loading: true, error: false, collapsed: email.collapsed });
       run("email", emailText);
+    } else {
+      setEmail({ text: null, loading: false, error: false, collapsed: email.collapsed });
     }
+
     if (chatText && chatText.length > MIN_CONTENT_LENGTH) {
-      setChat((s) => ({ ...s, loading: true, error: false }));
+      setChat({ text: null, loading: true, error: false, collapsed: chat.collapsed });
       run("chat", chatText);
+    } else {
+      setChat({ text: null, loading: false, error: false, collapsed: chat.collapsed });
     }
+
     if (tasks && tasks.length > 0) {
       const tasksText = tasks.map((t) => `- ${t.name} (${t.completed ? "Completed" : "Pending"})`).join("\n");
-      setTasksSummary((s) => ({ ...s, loading: true, error: false }));
+      setTasksSummary({ text: null, loading: true, error: false, collapsed: tasksSummary.collapsed });
       run("tasks", tasksText);
+    } else {
+      setTasksSummary({ text: null, loading: false, error: false, collapsed: tasksSummary.collapsed });
     }
-  }, [emailText, chatText, tasks, run]);
+  }, [emailText, chatText, tasks, email.collapsed, chat.collapsed, tasksSummary.collapsed, run]);
 
   return {
     email,
