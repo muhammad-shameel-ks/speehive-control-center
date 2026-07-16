@@ -22,6 +22,9 @@ export function AsanaSettings({ initiallyOpen = false }: { initiallyOpen?: boole
   const [error, setError] = useState<string | null>(null);
   const [source, setSource] = useState<Source>(null);
   const [envLocked, setEnvLocked] = useState(false);
+  const [configured, setConfigured] = useState(false);
+  const [connected, setConnected] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
 
   useEffect(() => {
     fetch("/api/asana/config", { cache: "no-store" })
@@ -29,9 +32,28 @@ export function AsanaSettings({ initiallyOpen = false }: { initiallyOpen?: boole
       .then((data: ConfigResponse) => {
         setSource(data.source);
         setEnvLocked(data.source === "env");
+        setConfigured(data.configured);
+        setConnected(data.connected);
       })
       .catch(() => {});
   }, []);
+
+  async function onDisconnect() {
+    setDisconnecting(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/asana/disconnect", { method: "POST" });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(data.error ?? `Request failed (${res.status})`);
+      }
+      setConnected(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to disconnect");
+    } finally {
+      setDisconnecting(false);
+    }
+  }
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -50,6 +72,8 @@ export function AsanaSettings({ initiallyOpen = false }: { initiallyOpen?: boole
       setStatus("saved");
       setClientSecret("");
       setSource("session");
+      setConfigured(true);
+      setConnected(false);
     } catch (err) {
       setStatus("error");
       setError(err instanceof Error ? err.message : "Unknown error");
@@ -69,7 +93,48 @@ export function AsanaSettings({ initiallyOpen = false }: { initiallyOpen?: boole
         </span>
       </button>
       {open && (
-        <div className="border-t border-zinc-200 px-4 py-4 dark:border-zinc-800">
+        <div className="border-t border-zinc-200 px-4 py-4 dark:border-zinc-800 space-y-4">
+          {connected ? (
+            <div className="space-y-3 pb-3 border-b border-zinc-200 dark:border-zinc-800">
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-green-500" />
+                <span className="text-xs font-medium text-green-600 dark:text-green-400">
+                  Connected to Asana
+                </span>
+              </div>
+              <p className="text-xs text-zinc-500">
+                Asana MCP integration is connected. The tasks panel will show live tasks from your workspaces.
+              </p>
+              <button
+                type="button"
+                onClick={onDisconnect}
+                disabled={disconnecting}
+                className="rounded border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-900"
+              >
+                {disconnecting ? "Disconnecting..." : "Disconnect Asana"}
+              </button>
+            </div>
+          ) : configured ? (
+            <div className="space-y-3 pb-3 border-b border-zinc-200 dark:border-zinc-800">
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-zinc-300 dark:bg-zinc-750" />
+                <span className="text-xs font-medium text-zinc-500">
+                  Disconnected
+                </span>
+              </div>
+              <p className="text-xs text-zinc-500">
+                Asana client credentials are set up. Sign in to link your personal Asana account.
+              </p>
+              <button
+                type="button"
+                onClick={() => { window.location.href = "/api/asana/login"; }}
+                className="inline-flex rounded bg-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 dark:hover:bg-zinc-200"
+              >
+                Sign in with Asana
+              </button>
+            </div>
+          ) : null}
+
           {envLocked ? (
             <p className="text-xs text-zinc-500">
               <span className="font-mono">ASANA_CLIENT_ID</span> and{" "}
@@ -79,7 +144,10 @@ export function AsanaSettings({ initiallyOpen = false }: { initiallyOpen?: boole
             </p>
           ) : (
             <>
-              <p className="mb-3 text-xs text-zinc-500">
+              <h4 className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
+                App Credentials
+              </h4>
+              <p className="text-xs text-zinc-500">
                 Create an MCP app at{" "}
                 <a
                   href="https://app.asana.com/0/my-apps"

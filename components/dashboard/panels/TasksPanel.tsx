@@ -1,7 +1,6 @@
 "use client";
 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { AsanaIcon } from "@/components/icons";
 import { EmptyConnect } from "@/components/dashboard/panels/EmptyConnect";
 import { EmptyState } from "@/components/dashboard/panels/EmptyState";
 import { LoadingSpinner } from "@/components/dashboard/panels/LoadingSpinner";
@@ -55,7 +54,7 @@ export function TasksPanel({
 
       <div className="flex items-center justify-between px-4 h-11 border-b border-border shrink-0">
         <div className="flex items-center gap-2">
-          <AsanaIcon className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--panel-tasks)" }} />
+          <img src="/images/asana.svg" alt="Asana" className="h-3.5 w-3.5 shrink-0 object-contain" />
           <span className="text-[12px] font-semibold text-foreground">Asana Tasks</span>
         </div>
         <div className="flex items-center gap-2.5">

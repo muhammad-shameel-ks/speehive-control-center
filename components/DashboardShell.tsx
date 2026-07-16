@@ -130,6 +130,12 @@ export function DashboardShell({}: { searchParams?: { asana?: string; asana_erro
                 onOpenBriefing={(tab) => {
                   briefing.openBriefing(tab);
                 }}
+                onOpenEmail={briefing.openForEmail}
+                onOpenChat={briefing.openForChat}
+                onOpenTask={briefing.openForTask}
+                parsedEmails={parsedEmails}
+                parsedChats={parsedChats}
+                asanaTasks={asana.tasks}
               />
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -271,6 +277,7 @@ export function DashboardShell({}: { searchParams?: { asana?: string; asana_erro
         setInlineTaskInput={mutations.setInlineInput}
         initialEmail={briefing.initialEmail}
         initialChat={briefing.initialChat}
+        initialTask={briefing.initialTask}
       />
     </div>
   );

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { BriefingDigestStrip } from "@/components/dashboard/briefing/BriefingDigestStrip";
 import { InitialAvatar } from "@/components/dashboard/panels/InitialAvatar";
 import { EmptyState } from "@/components/dashboard/panels/EmptyState";
-import { ChatBubbleIcon, SparklesIcon } from "@/components/icons";
+import { SparklesIcon } from "@/components/icons";
 import type { ParsedChat } from "@/lib/types/briefing";
 
 export function BriefingTeamsPage({
@@ -156,7 +156,7 @@ export function BriefingTeamsPage({
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center gap-2 text-center px-8">
               <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center mb-1">
-                <ChatBubbleIcon className="h-[18px] w-[18px] text-muted-foreground" />
+                <img src="/images/microsoft-teams.svg" alt="Teams" className="h-[18px] w-[18px] object-contain" />
               </div>
               <p className="text-[13px] font-medium text-foreground">Select a conversation</p>
               <p className="text-[12px] text-muted-foreground">Click any thread to read it and draft a reply</p>

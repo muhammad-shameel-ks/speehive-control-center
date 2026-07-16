@@ -1,14 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BriefingDigestStrip } from "@/components/dashboard/briefing/BriefingDigestStrip";
-import { AsanaIcon } from "@/components/icons";
 import { EmptyState } from "@/components/dashboard/panels/EmptyState";
 import { partitionByCompleted } from "@/lib/utils/array";
 import type { AsanaTask } from "@/lib/types/integrations";
 
 export function BriefingAsanaPage({
   asanaTasks,
+  initialTask,
   syncing,
   summary,
   loading,
@@ -20,6 +20,7 @@ export function BriefingAsanaPage({
   setInlineTaskInput,
 }: {
   asanaTasks: AsanaTask[] | null;
+  initialTask?: AsanaTask | null;
   syncing: boolean;
   summary: string | null;
   loading: boolean;
@@ -31,7 +32,15 @@ export function BriefingAsanaPage({
   setInlineTaskInput: (v: string) => void;
 }) {
   const [tab, setTab] = useState<"pending" | "done" | "all">("pending");
-  const [selected, setSelected] = useState<AsanaTask | null>(null);
+  const [selected, setSelected] = useState<AsanaTask | null>(initialTask ?? null);
+
+  useEffect(() => {
+    if (initialTask) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSelected(initialTask);
+      setTab(initialTask.completed ? "done" : "pending");
+    }
+  }, [initialTask]);
   const { pending, done } = partitionByCompleted(asanaTasks);
   const list = tab === "pending" ? pending : tab === "done" ? done : asanaTasks ?? [];
 
@@ -191,7 +200,7 @@ export function BriefingAsanaPage({
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center gap-2 text-center px-8">
               <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center mb-1">
-                <AsanaIcon className="h-[18px] w-[18px] text-muted-foreground" />
+                <img src="/images/asana.svg" alt="Asana" className="h-[18px] w-[18px] object-contain" />
               </div>
               <p className="text-[13px] font-medium text-foreground">Select a task</p>
               <p className="text-[12px] text-muted-foreground">Click any task to see details and take action</p>
