@@ -101,19 +101,30 @@ export function useSummaries(opts: {
 
   useEffect(() => {
     if (!hasGlobalInputs) return;
+
+    // Wait for active feeds to finish their individual summaries before generating the global briefing
+    const emailLoading = emailText && emailText.length > MIN_CONTENT_LENGTH && !email.text;
+    const chatLoading = chatText && chatText.length > MIN_CONTENT_LENGTH && !chat.text;
+    const tasksLoading = tasks && tasks.length > 0 && !tasksSummary.text;
+    if (emailLoading || chatLoading || tasksLoading) {
+      return;
+    }
+
     const fingerprint = `${email.text ?? ""}|${chat.text ?? ""}|${tasksSummary.text ?? ""}`;
     if (fingerprint === globalFingerprintRef.current) return;
     globalFingerprintRef.current = fingerprint;
+
     const parts: string[] = [];
     if (email.text) parts.push(`[MAIL] ${email.text}`);
     if (chat.text) parts.push(`[TEAMS] ${chat.text}`);
     if (tasksSummary.text) parts.push(`[ASANA] ${tasksSummary.text}`);
     if (parts.length === 0) return;
+
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setGlobalLoading(true);
     const timer = setTimeout(() => run("global", parts.join("\n\n")), GLOBAL_DEBOUNCE_MS);
     return () => clearTimeout(timer);
-  }, [email.text, chat.text, tasksSummary.text, hasGlobalInputs, run]);
+  }, [email.text, chat.text, tasksSummary.text, hasGlobalInputs, emailText, chatText, tasks, run]);
 
   const retryEmail = useCallback(() => {
     if (emailText && emailText.length > MIN_CONTENT_LENGTH) {
@@ -151,6 +162,27 @@ export function useSummaries(opts: {
     run("global", parts.join("\n\n"));
   }, [email.text, chat.text, tasksSummary.text, run]);
 
+  const refreshAll = useCallback(() => {
+    emailFingerprintRef.current = "";
+    chatFingerprintRef.current = "";
+    tasksFingerprintRef.current = "";
+    globalFingerprintRef.current = "";
+
+    if (emailText && emailText.length > MIN_CONTENT_LENGTH) {
+      setEmail((s) => ({ ...s, loading: true, error: false }));
+      run("email", emailText);
+    }
+    if (chatText && chatText.length > MIN_CONTENT_LENGTH) {
+      setChat((s) => ({ ...s, loading: true, error: false }));
+      run("chat", chatText);
+    }
+    if (tasks && tasks.length > 0) {
+      const tasksText = tasks.map((t) => `- ${t.name} (${t.completed ? "Completed" : "Pending"})`).join("\n");
+      setTasksSummary((s) => ({ ...s, loading: true, error: false }));
+      run("tasks", tasksText);
+    }
+  }, [emailText, chatText, tasks, run]);
+
   return {
     email,
     chat,
@@ -164,5 +196,6 @@ export function useSummaries(opts: {
     retryChat,
     retryTasks,
     refreshGlobal,
+    refreshAll,
   };
 }

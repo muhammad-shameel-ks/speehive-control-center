@@ -82,6 +82,7 @@ export function DashboardShell({}: { searchParams?: { asana?: string; asana_erro
         refreshTeams: chats.refresh,
         refreshAsana: asana.refresh,
       });
+      summaries.refreshAll();
     } finally {
       setIsRefreshing(false);
     }
