@@ -1,15 +1,13 @@
 "use client";
 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { AsanaIcon } from "@/components/icons";
 import { EmptyConnect } from "@/components/dashboard/panels/EmptyConnect";
 import { EmptyState } from "@/components/dashboard/panels/EmptyState";
 import { LoadingSpinner } from "@/components/dashboard/panels/LoadingSpinner";
 import { TaskRow } from "@/components/dashboard/panels/TaskRow";
 import type { AsanaTask } from "@/lib/types/integrations";
 import { partitionByCompleted } from "@/lib/utils/array";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import { ClickableDigest } from "@/components/dashboard/panels/ClickableDigest";
 
 type TasksSummary = {
   text: string | null;
@@ -29,6 +27,7 @@ export function TasksPanel({
   inlineInput,
   onInlineInputChange,
   onInlineAddTask,
+  onOpenTask,
 }: {
   asanaStatus: "loading" | "connected" | "disconnected" | "unconfigured" | "unauthorized";
   tasks: AsanaTask[] | null;
@@ -40,6 +39,7 @@ export function TasksPanel({
   inlineInput: string;
   onInlineInputChange: (value: string) => void;
   onInlineAddTask: (e: React.FormEvent) => void;
+  onOpenTask?: (task: AsanaTask) => void;
 }) {
   const { pending, done } = partitionByCompleted(tasks);
 
@@ -55,10 +55,11 @@ export function TasksPanel({
 
       <div className="flex items-center justify-between px-4 h-11 border-b border-border shrink-0">
         <div className="flex items-center gap-2">
-          <AsanaIcon className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--panel-tasks)" }} />
+          <img src="/images/asana.svg" alt="Asana" className="h-3.5 w-3.5 shrink-0 object-contain" />
           <span className="text-[12px] font-semibold text-foreground">Asana Tasks</span>
         </div>
         <div className="flex items-center gap-2.5">
+          {syncing && <LoadingSpinner />}
           {(tasksSummary.text || tasksSummary.loading) && (
             <button
               onClick={onToggleSummaryCollapsed}
@@ -72,7 +73,7 @@ export function TasksPanel({
             disabled={syncing || asanaStatus !== "connected"}
             className="text-[11px] font-semibold text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"
           >
-            {syncing ? "Syncing…" : "Sync"}
+            Sync
           </button>
         </div>
       </div>
@@ -94,9 +95,14 @@ export function TasksPanel({
               <div className="h-3 bg-muted rounded w-5/6" />
             </div>
           ) : (
-            <p className="text-[12px] text-muted-foreground leading-relaxed">
-              <TasksSummaryMarkdown text={tasksSummary.text ?? ""} />
-            </p>
+            <div className="leading-relaxed">
+              <ClickableDigest
+                text={tasksSummary.text ?? ""}
+                source="ASANA"
+                asanaTasks={tasks}
+                onOpenTask={onOpenTask}
+              />
+            </div>
           )}
         </div>
       )}
@@ -200,6 +206,3 @@ export function TasksPanel({
   );
 }
 
-function TasksSummaryMarkdown({ text }: { text: string }) {
-  return <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>;
-}

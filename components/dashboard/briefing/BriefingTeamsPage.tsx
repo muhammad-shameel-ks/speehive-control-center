@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { BriefingDigestStrip } from "@/components/dashboard/briefing/BriefingDigestStrip";
 import { InitialAvatar } from "@/components/dashboard/panels/InitialAvatar";
 import { EmptyState } from "@/components/dashboard/panels/EmptyState";
-import { ChatBubbleIcon, SparklesIcon } from "@/components/icons";
+import { SparklesIcon } from "@/components/icons";
 import type { ParsedChat } from "@/lib/types/briefing";
 
 export function BriefingTeamsPage({
@@ -35,7 +35,16 @@ export function BriefingTeamsPage({
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
-      <BriefingDigestStrip summary={summary} loading={loading} error={error} onRetry={onRetry} color="#3CBFAC" />
+      <BriefingDigestStrip
+        summary={summary}
+        loading={loading}
+        error={error}
+        onRetry={onRetry}
+        color="#3CBFAC"
+        source="TEAMS"
+        parsedChats={parsedChats}
+        onOpenChat={setSelected}
+      />
 
       <div className="flex flex-1 overflow-hidden">
         <div className="w-[320px] shrink-0 border-r border-border overflow-y-auto">
@@ -136,11 +145,7 @@ export function BriefingTeamsPage({
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 hover:bg-muted/60 px-4 py-2 text-[12px] font-semibold text-foreground transition-colors"
                   >
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-muted-foreground">
-                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                      <polyline points="15 3 21 3 21 9" />
-                      <line x1="10" y1="14" x2="21" y2="3" />
-                    </svg>
+                    <img src="/images/microsoft-teams.svg" alt="Teams" className="h-3.5 w-3.5 object-contain" />
                     Open in Teams
                   </a>
                 )}
@@ -156,7 +161,7 @@ export function BriefingTeamsPage({
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center gap-2 text-center px-8">
               <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center mb-1">
-                <ChatBubbleIcon className="h-[18px] w-[18px] text-muted-foreground" />
+                <img src="/images/microsoft-teams.svg" alt="Teams" className="h-[18px] w-[18px] object-contain" />
               </div>
               <p className="text-[13px] font-medium text-foreground">Select a conversation</p>
               <p className="text-[12px] text-muted-foreground">Click any thread to read it and draft a reply</p>

@@ -2,6 +2,9 @@
 
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { ClickableDigest } from "@/components/dashboard/panels/ClickableDigest";
+import { type SummarySource, type ParsedEmail, type ParsedChat } from "@/lib/types/briefing";
+import type { AsanaTask } from "@/lib/types/integrations";
 
 export function BriefingDigestStrip({
   summary,
@@ -9,16 +12,30 @@ export function BriefingDigestStrip({
   error,
   onRetry,
   color,
+  source,
+  parsedEmails,
+  parsedChats,
+  asanaTasks,
+  onOpenEmail,
+  onOpenChat,
+  onOpenTask,
 }: {
   summary: string | null;
   loading: boolean;
   error?: boolean;
   onRetry?: () => void;
   color: string;
+  source?: SummarySource;
+  parsedEmails?: ParsedEmail[];
+  parsedChats?: ParsedChat[];
+  asanaTasks?: AsanaTask[] | null;
+  onOpenEmail?: (email: ParsedEmail) => void;
+  onOpenChat?: (chat: ParsedChat) => void;
+  onOpenTask?: (task: AsanaTask) => void;
 }) {
   if (!summary && !loading && !error) return null;
   return (
-    <div className="px-5 py-3 border-b border-border bg-muted/20 shrink-0">
+    <div className="px-5 py-3 border-b border-border bg-muted/20 shrink-0 max-h-[140px] overflow-y-auto">
       <div className="flex items-center gap-2 mb-1.5">
         <svg
           width="12"
@@ -55,6 +72,19 @@ export function BriefingDigestStrip({
               Retry
             </button>
           )}
+        </div>
+      ) : source && (parsedEmails || parsedChats || asanaTasks) ? (
+        <div className="leading-relaxed">
+          <ClickableDigest
+            text={summary ?? ""}
+            source={source}
+            parsedEmails={parsedEmails}
+            parsedChats={parsedChats}
+            asanaTasks={asanaTasks}
+            onOpenEmail={onOpenEmail}
+            onOpenChat={onOpenChat}
+            onOpenTask={onOpenTask}
+          />
         </div>
       ) : (
         <div className="text-[12px] text-foreground font-medium leading-relaxed">

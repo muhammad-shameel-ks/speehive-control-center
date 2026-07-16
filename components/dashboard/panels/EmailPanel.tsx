@@ -6,9 +6,8 @@ import { LoadingSpinner } from "@/components/dashboard/panels/LoadingSpinner";
 import { InitialAvatar } from "@/components/dashboard/panels/InitialAvatar";
 import { parseEmails } from "@/lib/parser";
 import type { ParsedEmail } from "@/lib/types/briefing";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import type { RefObject } from "react";
+import { ClickableDigest } from "@/components/dashboard/panels/ClickableDigest";
 
 type EmailSummary = {
   text: string | null;
@@ -56,6 +55,7 @@ export function EmailPanel({
 
       <div className="flex items-center justify-between px-4 h-11 border-b border-border shrink-0">
         <div className="flex items-center gap-2">
+          <img src="/images/microsoft-outlook.svg" alt="Outlook" className="h-3.5 w-3.5 shrink-0 object-contain" />
           <span className="text-[12px] font-semibold text-foreground">Inbox</span>
         </div>
         <div className="flex items-center gap-2.5">
@@ -94,9 +94,14 @@ export function EmailPanel({
               <div className="h-3 bg-muted rounded w-5/6" />
             </div>
           ) : (
-            <p className="text-[12px] text-muted-foreground leading-relaxed">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{emailSummary.text ?? ""}</ReactMarkdown>
-            </p>
+            <div className="leading-relaxed">
+              <ClickableDigest
+                text={emailSummary.text ?? ""}
+                source="MAIL"
+                parsedEmails={parsedEmails}
+                onOpenEmail={onOpenEmail}
+              />
+            </div>
           )}
         </div>
       )}

@@ -40,6 +40,7 @@ export type BriefingModalProps = {
   setInlineTaskInput: (v: string) => void;
   initialEmail?: ParsedEmail | null;
   initialChat?: ParsedChat | null;
+  initialTask?: AsanaTask | null;
 };
 
 export function BriefingModal({
@@ -72,6 +73,7 @@ export function BriefingModal({
   setInlineTaskInput,
   initialEmail,
   initialChat,
+  initialTask,
 }: BriefingModalProps) {
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -93,21 +95,21 @@ export function BriefingModal({
               <TabsList className="bg-muted/40 border border-border rounded-lg p-0.5 h-8">
                 <TabsTrigger
                   value="mail"
-                  className="text-[12px] font-semibold h-7 px-4 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=inactive]:text-muted-foreground rounded-md cursor-pointer"
+                  className="text-[12px] font-semibold h-7 px-4 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=inactive]:text-muted-foreground rounded-md cursor-pointer flex items-center"
                 >
-                  <span className="mr-1.5" style={{ color: "#5B9FD4" }}>●</span>Mail
+                  <img src="/images/microsoft-outlook.svg" alt="Mail" className="h-3.5 w-3.5 mr-1.5 object-contain" />Mail
                 </TabsTrigger>
                 <TabsTrigger
                   value="teams"
-                  className="text-[12px] font-semibold h-7 px-4 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=inactive]:text-muted-foreground rounded-md cursor-pointer"
+                  className="text-[12px] font-semibold h-7 px-4 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=inactive]:text-muted-foreground rounded-md cursor-pointer flex items-center"
                 >
-                  <span className="mr-1.5" style={{ color: "#3CBFAC" }}>●</span>Teams
+                  <img src="/images/microsoft-teams.svg" alt="Teams" className="h-3.5 w-3.5 mr-1.5 object-contain" />Teams
                 </TabsTrigger>
                 <TabsTrigger
                   value="asana"
-                  className="text-[12px] font-semibold h-7 px-4 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=inactive]:text-muted-foreground rounded-md cursor-pointer"
+                  className="text-[12px] font-semibold h-7 px-4 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=inactive]:text-muted-foreground rounded-md cursor-pointer flex items-center"
                 >
-                  <span className="mr-1.5" style={{ color: "#60C83A" }}>●</span>Asana
+                  <img src="/images/asana.svg" alt="Asana" className="h-3.5 w-3.5 mr-1.5 object-contain" />Asana
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -146,6 +148,7 @@ export function BriefingModal({
         {activeTab === "asana" && (
           <BriefingAsanaPage
             asanaTasks={asanaTasks}
+            initialTask={initialTask}
             syncing={asanaSyncing}
             summary={tasksSummary}
             loading={tasksSummaryLoading}

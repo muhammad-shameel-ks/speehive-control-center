@@ -1,6 +1,5 @@
 "use client";
 
-import { ChatBubbleIcon } from "@/components/icons";
 import { Notepad } from "@/components/dashboard/Notepad";
 import { EmptyConnect } from "@/components/dashboard/panels/EmptyConnect";
 import { EmptyState } from "@/components/dashboard/panels/EmptyState";
@@ -8,8 +7,7 @@ import { LoadingSpinner } from "@/components/dashboard/panels/LoadingSpinner";
 import { InitialAvatar } from "@/components/dashboard/panels/InitialAvatar";
 import { parseChats } from "@/lib/parser";
 import type { ParsedChat } from "@/lib/types/briefing";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import { ClickableDigest } from "@/components/dashboard/panels/ClickableDigest";
 
 type ChatSummary = {
   text: string | null;
@@ -47,7 +45,7 @@ export function ChatColumn({
 
         <div className="flex items-center justify-between px-4 h-11 border-b border-border shrink-0">
           <div className="flex items-center gap-2">
-            <ChatBubbleIcon className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--panel-chat)" }} />
+            <img src="/images/microsoft-teams.svg" alt="Teams" className="h-3.5 w-3.5 shrink-0 object-contain" />
             <span className="text-[12px] font-semibold text-foreground">Teams Chats</span>
           </div>
           <div className="flex items-center gap-2.5">
@@ -86,9 +84,14 @@ export function ChatColumn({
                 <div className="h-3 bg-muted rounded w-5/6" />
               </div>
             ) : (
-              <p className="text-[12px] text-muted-foreground leading-relaxed">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{chatSummary.text ?? ""}</ReactMarkdown>
-              </p>
+              <div className="leading-relaxed">
+                <ClickableDigest
+                  text={chatSummary.text ?? ""}
+                  source="TEAMS"
+                  parsedChats={parsedChats}
+                  onOpenChat={onOpenChat}
+                />
+              </div>
             )}
           </div>
         )}
