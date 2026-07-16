@@ -14,29 +14,29 @@ function findBestMatch(
   asanaTasks: AsanaTask[] | null
 ) {
   const query = summaryText.toLowerCase();
+  const cleanQuery = query.replace(/[^\w\s]/g, " ");
+  const queryWords = new Set(cleanQuery.split(/\s+/).filter(w => w.length > 2));
 
   if (source === "MAIL") {
     let bestEmail: ParsedEmail | undefined;
     let maxScore = 0;
     for (const email of parsedEmails) {
       let score = 0;
-      const sender = email.sender.toLowerCase();
-      const subject = email.subject.toLowerCase();
+      const cleanSender = email.sender.toLowerCase().replace(/[^\w\s]/g, " ");
+      const cleanSubject = email.subject.toLowerCase().replace(/[^\w\s]/g, " ");
+      
+      const senderWords = cleanSender.split(/\s+/).filter(w => w.length > 2);
+      const subjectWords = cleanSubject.split(/\s+/).filter(w => w.length > 2);
 
-      if (sender && query.includes(sender)) score += 15;
-      const senderWords = sender.split(/\s+/).filter(w => w.length > 2);
       for (const w of senderWords) {
-        if (query.includes(w)) score += 3;
+        if (queryWords.has(w)) score += 5;
       }
-
-      if (subject && query.includes(subject)) score += 20;
-      const subjectWords = subject.split(/\s+/).filter(w => w.length > 3);
       for (const w of subjectWords) {
-        if (query.includes(w)) score += 4;
+        if (queryWords.has(w)) score += 10;
       }
 
-      if (email.raw && email.raw.toLowerCase().split(/\s+/).filter(w => w.length > 4).some(w => query.includes(w))) {
-        score += 1;
+      if (cleanQuery.includes(cleanSubject) || cleanSubject.includes(cleanQuery)) {
+        score += 30;
       }
 
       if (score > maxScore) {
@@ -44,7 +44,7 @@ function findBestMatch(
         bestEmail = email;
       }
     }
-    if (bestEmail && maxScore > 2) {
+    if (bestEmail && maxScore > 5) {
       return { type: "email" as const, item: bestEmail };
     }
   }
@@ -54,22 +54,26 @@ function findBestMatch(
     let maxScore = 0;
     for (const chat of parsedChats) {
       let score = 0;
-      const title = chat.title.toLowerCase();
-      const lastMsg = chat.lastMessage.toLowerCase();
-      const sender = chat.sender.toLowerCase();
+      const cleanTitle = chat.title.toLowerCase().replace(/[^\w\s]/g, " ");
+      const cleanLastMsg = chat.lastMessage.toLowerCase().replace(/[^\w\s]/g, " ");
+      const cleanSender = chat.sender.toLowerCase().replace(/[^\w\s]/g, " ");
 
-      if (title && query.includes(title)) score += 15;
-      const titleWords = title.split(/\s+/).filter(w => w.length > 2);
+      const titleWords = cleanTitle.split(/\s+/).filter(w => w.length > 2);
+      const lastMsgWords = cleanLastMsg.split(/\s+/).filter(w => w.length > 2);
+      const senderWords = cleanSender.split(/\s+/).filter(w => w.length > 2);
+
       for (const w of titleWords) {
-        if (query.includes(w)) score += 3;
+        if (queryWords.has(w)) score += 8;
+      }
+      for (const w of lastMsgWords) {
+        if (queryWords.has(w)) score += 12;
+      }
+      for (const w of senderWords) {
+        if (queryWords.has(w)) score += 5;
       }
 
-      if (sender && query.includes(sender)) score += 8;
-
-      if (lastMsg && query.includes(lastMsg)) score += 20;
-      const msgWords = lastMsg.split(/\s+/).filter(w => w.length > 3);
-      for (const w of msgWords) {
-        if (query.includes(w)) score += 4;
+      if (cleanQuery.includes(cleanTitle) || cleanTitle.includes(cleanQuery)) {
+        score += 25;
       }
 
       if (score > maxScore) {
@@ -77,7 +81,7 @@ function findBestMatch(
         bestChat = chat;
       }
     }
-    if (bestChat && maxScore > 2) {
+    if (bestChat && maxScore > 5) {
       return { type: "chat" as const, item: bestChat };
     }
   }
@@ -87,12 +91,15 @@ function findBestMatch(
     let maxScore = 0;
     for (const task of asanaTasks) {
       let score = 0;
-      const name = task.name.toLowerCase();
+      const cleanName = task.name.toLowerCase().replace(/[^\w\s]/g, " ");
+      const nameWords = cleanName.split(/\s+/).filter(w => w.length > 2);
 
-      if (name && query.includes(name)) score += 15;
-      const nameWords = name.split(/\s+/).filter(w => w.length > 3);
       for (const w of nameWords) {
-        if (query.includes(w)) score += 3;
+        if (queryWords.has(w)) score += 10;
+      }
+
+      if (cleanQuery.includes(cleanName) || cleanName.includes(cleanQuery)) {
+        score += 30;
       }
 
       if (score > maxScore) {
@@ -100,7 +107,7 @@ function findBestMatch(
         bestTask = task;
       }
     }
-    if (bestTask && maxScore > 2) {
+    if (bestTask && maxScore > 5) {
       return { type: "task" as const, item: bestTask };
     }
   }

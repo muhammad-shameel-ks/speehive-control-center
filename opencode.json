@@ -8,6 +8,11 @@
       "env": {
         "SEARXNG_BASE": "http://localhost:8080"
       }
+    },
+    "supabase": {
+      "type": "remote",
+      "url": "https://mcp.supabase.com/mcp?project_ref=zyoswiuptsyafnnvbgox",
+      "enabled": true
     }
   }
 }
