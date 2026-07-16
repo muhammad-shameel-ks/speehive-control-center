@@ -24,6 +24,7 @@ export function ChatColumn({
   text,
   syncing,
   refresh,
+  onOpenNotes,
 }: {
   ms365Connected: boolean;
   chatSummary: ChatSummary;
@@ -32,6 +33,7 @@ export function ChatColumn({
   text: string | null;
   syncing: boolean;
   refresh: () => Promise<unknown>;
+  onOpenNotes: () => void;
 }) {
   const parsedChats = parseChats(text);
 
@@ -135,7 +137,7 @@ export function ChatColumn({
         </div>
       </div>
 
-      <Notepad />
+      <Notepad onExpand={onOpenNotes} />
     </div>
   );
 }

@@ -23,6 +23,7 @@ import { useBriefing } from "@/hooks/useBriefing";
 import { useTaskMutations } from "@/hooks/useTaskMutations";
 import { parseEmails, parseChats } from "@/lib/parser";
 import { refreshAllIntegrations } from "@/lib/integrations/refresh-all";
+import { NotesModal } from "@/components/notes/NotesModal";
 
 export function DashboardShell({}: { searchParams?: { asana?: string; asana_error?: string; ms365?: string; ms365_error?: string } }) {
   const { theme, setTheme } = useTheme();
@@ -36,6 +37,7 @@ export function DashboardShell({}: { searchParams?: { asana?: string; asana_erro
   const [activeTab, setActiveTab] = useState<DashboardTab>("dashboard");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isNotesOpen, setIsNotesOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [chatInitialInput, setChatInitialInput] = useState("");
   const [userEmail, setUserEmail] = useState<string | undefined>();
@@ -161,6 +163,7 @@ export function DashboardShell({}: { searchParams?: { asana?: string; asana_erro
                   text={chats.text}
                   syncing={chats.syncing}
                   refresh={chats.refresh}
+                  onOpenNotes={() => setIsNotesOpen(true)}
                 />
                 <TasksPanel
                   asanaStatus={asana.state.status}
@@ -280,6 +283,11 @@ export function DashboardShell({}: { searchParams?: { asana?: string; asana_erro
         initialEmail={briefing.initialEmail}
         initialChat={briefing.initialChat}
         initialTask={briefing.initialTask}
+      />
+
+      <NotesModal
+        open={isNotesOpen}
+        onClose={() => setIsNotesOpen(false)}
       />
     </div>
   );

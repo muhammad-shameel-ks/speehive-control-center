@@ -1,36 +1,44 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 const STORAGE_KEY = "speehive_notepad";
-const DEFAULT_NOTES = [
-  "- Server IP: 10.0.4.88",
-  "- AWS Billing Review: July 12",
-  "- Alice Laptop Serial: C02F54G1Q05D",
-  "- Okta SSO setup details pending",
-].join("\n");
 
-export function useNotepad(): {
-  text: string;
-  setText: (next: string) => void;
-} {
-  const [text, setTextState] = useState("");
+export function useNotepadMigration() {
+  const [migrated, setMigrated] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setTextState(saved);
-    } else {
-      setTextState(DEFAULT_NOTES);
-      localStorage.setItem(STORAGE_KEY, DEFAULT_NOTES);
+    const supabase = createClient();
+    async function migrate() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const localText = localStorage.getItem(STORAGE_KEY);
+      if (!localText) return;
+
+      const { count, error } = await supabase
+        .from("notes")
+        .select("id", { count: "exact", head: true });
+
+      if (error || (count && count > 0)) {
+        localStorage.removeItem(STORAGE_KEY);
+        return;
+      }
+
+      await supabase
+        .from("notes")
+        .insert({
+          user_id: user.id,
+          title: "Quick Notes",
+          content: localText,
+        });
+
+      localStorage.removeItem(STORAGE_KEY);
+      setMigrated(true);
     }
+    migrate();
   }, []);
 
-  const setText = useCallback((next: string) => {
-    setTextState(next);
-    localStorage.setItem(STORAGE_KEY, next);
-  }, []);
-
-  return { text, setText };
+  return migrated;
 }

@@ -98,6 +98,73 @@ export function PencilIcon(props: IconProps) {
   );
 }
 
+export function PinIcon(props: IconProps) {
+  return (
+    <svg {...passthrough(props)} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <path d="M12 2L12 22M12 2L8 6M12 2L16 6M5 12H2M22 12H19" />
+    </svg>
+  );
+}
+
+export function TrashIcon(props: IconProps) {
+  return (
+    <svg {...passthrough(props)} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+    </svg>
+  );
+}
+
+export function HistoryIcon(props: IconProps) {
+  return (
+    <svg {...passthrough(props)} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 6v6l4 2" />
+    </svg>
+  );
+}
+
+export function ExpandIcon(props: IconProps) {
+  return (
+    <svg {...passthrough(props)} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+    </svg>
+  );
+}
+
+export function SearchIcon(props: IconProps) {
+  return (
+    <svg {...passthrough(props)} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <circle cx="11" cy="11" r="8" />
+      <path d="M21 21l-4.35-4.35" />
+    </svg>
+  );
+}
+
+export function RestoreIcon(props: IconProps) {
+  return (
+    <svg {...passthrough(props)} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+      <path d="M3 3v5h5" />
+    </svg>
+  );
+}
+
+export function CheckIcon(props: IconProps) {
+  return (
+    <svg {...passthrough(props)} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <path d="M20 6L9 17l-5-5" />
+    </svg>
+  );
+}
+
+export function DownloadIcon(props: IconProps) {
+  return (
+    <svg {...passthrough(props)} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+    </svg>
+  );
+}
+
 export function PlusIcon(props: IconProps) {
   return (
     <svg {...passthrough(props)} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
