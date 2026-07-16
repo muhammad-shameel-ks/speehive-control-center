@@ -56,7 +56,15 @@ export function TasksPanel({
       <div className="flex items-center justify-between px-4 h-11 border-b border-border shrink-0">
         <div className="flex items-center gap-2">
           <img src="/images/asana.svg" alt="Asana" className="h-3.5 w-3.5 shrink-0 object-contain" />
-          <span className="text-[12px] font-semibold text-foreground">Asana Tasks</span>
+          <a
+            href="https://app.asana.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Open Asana in new tab"
+            className="text-[12px] font-semibold text-foreground hover:underline underline-offset-2"
+          >
+            Asana Tasks
+          </a>
         </div>
         <div className="flex items-center gap-2.5">
           {syncing && <LoadingSpinner />}
@@ -153,7 +161,7 @@ export function TasksPanel({
               >
                 {pending.length > 0 ? (
                   pending.map((task) => (
-                    <TaskRow key={task.gid} task={task} onToggle={() => onToggleTask(task.gid, false)} />
+                    <TaskRow key={task.gid} task={task} onToggle={() => onToggleTask(task.gid, false)} onOpen={() => onOpenTask?.(task)} />
                   ))
                 ) : (
                   <EmptyState message="No pending tasks." />
@@ -166,7 +174,7 @@ export function TasksPanel({
               >
                 {done.length > 0 ? (
                   done.map((task) => (
-                    <TaskRow key={task.gid} task={task} onToggle={() => onToggleTask(task.gid, true)} />
+                    <TaskRow key={task.gid} task={task} onToggle={() => onToggleTask(task.gid, true)} onOpen={() => onOpenTask?.(task)} />
                   ))
                 ) : (
                   <EmptyState message="No completed tasks." />
@@ -179,6 +187,7 @@ export function TasksPanel({
                     key={task.gid}
                     task={task}
                     onToggle={() => onToggleTask(task.gid, task.completed)}
+                    onOpen={() => onOpenTask?.(task)}
                   />
                 ))}
               </TabsContent>

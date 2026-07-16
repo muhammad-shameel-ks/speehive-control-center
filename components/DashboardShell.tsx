@@ -23,7 +23,7 @@ import { useBriefing } from "@/hooks/useBriefing";
 import { useTaskMutations } from "@/hooks/useTaskMutations";
 import { parseEmails, parseChats } from "@/lib/parser";
 import { refreshAllIntegrations } from "@/lib/integrations/refresh-all";
-import { NotesModal } from "@/components/notes/NotesModal";
+import { TodosModal } from "@/components/notes/TodosModal";
 
 export function DashboardShell({}: { searchParams?: { asana?: string; asana_error?: string; ms365?: string; ms365_error?: string } }) {
   const { theme, setTheme } = useTheme();
@@ -285,7 +285,7 @@ export function DashboardShell({}: { searchParams?: { asana?: string; asana_erro
         initialTask={briefing.initialTask}
       />
 
-      <NotesModal
+      <TodosModal
         open={isNotesOpen}
         onClose={() => setIsNotesOpen(false)}
       />

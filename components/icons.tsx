@@ -183,3 +183,28 @@ export function RefreshIcon(props: IconProps) {
     </svg>
   );
 }
+
+export function CircleIcon(props: IconProps) {
+  return (
+    <svg {...passthrough(props)} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10" />
+    </svg>
+  );
+}
+
+export function CheckCircleIcon(props: IconProps) {
+  return (
+    <svg {...passthrough(props)} fill="currentColor" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M9 12l2 2 4-4" fill="none" stroke="var(--background)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function XIcon(props: IconProps) {
+  return (
+    <svg {...passthrough(props)} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <path d="M18 6L6 18M6 6l12 12" />
+    </svg>
+  );
+}

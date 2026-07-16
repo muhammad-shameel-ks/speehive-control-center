@@ -1,6 +1,6 @@
 import type { AsanaTask } from "@/lib/types/integrations";
 
-export function TaskRow({ task, onToggle }: { task: AsanaTask; onToggle: () => void }) {
+export function TaskRow({ task, onToggle, onOpen }: { task: AsanaTask; onToggle: () => void; onOpen?: () => void }) {
   return (
     <div
       className={`group flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-muted/40 transition-colors ${task.completed ? "opacity-55" : ""}`}
@@ -19,11 +19,12 @@ export function TaskRow({ task, onToggle }: { task: AsanaTask; onToggle: () => v
           </svg>
         )}
       </button>
-      <span
-        className={`flex-1 text-[13px] leading-snug ${task.completed ? "line-through text-muted-foreground" : "text-foreground"}`}
+      <button
+        onClick={onOpen}
+        className={`flex-1 text-left text-[13px] leading-snug transition-colors hover:underline underline-offset-2 ${task.completed ? "line-through text-muted-foreground" : "text-foreground"}`}
       >
         {task.name}
-      </span>
+      </button>
       {task.due_on && (
         <span className="text-[11px] font-mono text-muted-foreground shrink-0 tabular-nums">
           {task.due_on}

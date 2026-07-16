@@ -48,7 +48,15 @@ export function ChatColumn({
         <div className="flex items-center justify-between px-4 h-11 border-b border-border shrink-0">
           <div className="flex items-center gap-2">
             <img src="/images/microsoft-teams.svg" alt="Teams" className="h-3.5 w-3.5 shrink-0 object-contain" />
-            <span className="text-[12px] font-semibold text-foreground">Teams Chats</span>
+            <a
+              href="https://teams.microsoft.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Open Teams in new tab"
+              className="text-[12px] font-semibold text-foreground hover:underline underline-offset-2"
+            >
+              Teams Chats
+            </a>
           </div>
           <div className="flex items-center gap-2.5">
             {(chatSummary.text || chatSummary.loading) && (
