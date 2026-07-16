@@ -59,6 +59,7 @@ export function TasksPanel({
           <span className="text-[12px] font-semibold text-foreground">Asana Tasks</span>
         </div>
         <div className="flex items-center gap-2.5">
+          {syncing && <LoadingSpinner />}
           {(tasksSummary.text || tasksSummary.loading) && (
             <button
               onClick={onToggleSummaryCollapsed}
@@ -72,7 +73,7 @@ export function TasksPanel({
             disabled={syncing || asanaStatus !== "connected"}
             className="text-[11px] font-semibold text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"
           >
-            {syncing ? "Syncing…" : "Sync"}
+            Sync
           </button>
         </div>
       </div>
