@@ -175,6 +175,7 @@ export function DashboardShell({}: { searchParams?: { asana?: string; asana_erro
                     e.preventDefault();
                     await mutations.addInline(mutations.inlineInput);
                   }}
+                  onOpenTask={briefing.openForTask}
                 />
               </div>
             </>

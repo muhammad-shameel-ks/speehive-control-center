@@ -7,8 +7,7 @@ import { LoadingSpinner } from "@/components/dashboard/panels/LoadingSpinner";
 import { TaskRow } from "@/components/dashboard/panels/TaskRow";
 import type { AsanaTask } from "@/lib/types/integrations";
 import { partitionByCompleted } from "@/lib/utils/array";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import { ClickableDigest } from "@/components/dashboard/panels/ClickableDigest";
 
 type TasksSummary = {
   text: string | null;
@@ -28,6 +27,7 @@ export function TasksPanel({
   inlineInput,
   onInlineInputChange,
   onInlineAddTask,
+  onOpenTask,
 }: {
   asanaStatus: "loading" | "connected" | "disconnected" | "unconfigured" | "unauthorized";
   tasks: AsanaTask[] | null;
@@ -39,6 +39,7 @@ export function TasksPanel({
   inlineInput: string;
   onInlineInputChange: (value: string) => void;
   onInlineAddTask: (e: React.FormEvent) => void;
+  onOpenTask?: (task: AsanaTask) => void;
 }) {
   const { pending, done } = partitionByCompleted(tasks);
 
@@ -93,9 +94,14 @@ export function TasksPanel({
               <div className="h-3 bg-muted rounded w-5/6" />
             </div>
           ) : (
-            <p className="text-[12px] text-muted-foreground leading-relaxed">
-              <TasksSummaryMarkdown text={tasksSummary.text ?? ""} />
-            </p>
+            <div className="leading-relaxed">
+              <ClickableDigest
+                text={tasksSummary.text ?? ""}
+                source="ASANA"
+                asanaTasks={tasks}
+                onOpenTask={onOpenTask}
+              />
+            </div>
           )}
         </div>
       )}
@@ -199,6 +205,3 @@ export function TasksPanel({
   );
 }
 
-function TasksSummaryMarkdown({ text }: { text: string }) {
-  return <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>;
-}

@@ -46,7 +46,16 @@ export function BriefingAsanaPage({
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
-      <BriefingDigestStrip summary={summary} loading={loading} error={error} onRetry={onRetry} color="#60C83A" />
+      <BriefingDigestStrip
+        summary={summary}
+        loading={loading}
+        error={error}
+        onRetry={onRetry}
+        color="#60C83A"
+        source="ASANA"
+        asanaTasks={asanaTasks}
+        onOpenTask={setSelected}
+      />
 
       <div className="flex flex-1 overflow-hidden">
         <div className="w-[320px] shrink-0 border-r border-border flex flex-col overflow-hidden">

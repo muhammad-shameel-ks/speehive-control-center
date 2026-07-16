@@ -37,7 +37,16 @@ export function BriefingMailPage({
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
-      <BriefingDigestStrip summary={summary} loading={loading} error={error} onRetry={onRetry} color="#5B9FD4" />
+      <BriefingDigestStrip
+        summary={summary}
+        loading={loading}
+        error={error}
+        onRetry={onRetry}
+        color="#5B9FD4"
+        source="MAIL"
+        parsedEmails={parsedEmails}
+        onOpenEmail={setSelected}
+      />
 
       <div className="flex flex-1 overflow-hidden">
         <div className="w-[320px] shrink-0 border-r border-border overflow-y-auto">
