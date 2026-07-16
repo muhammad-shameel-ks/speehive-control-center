@@ -35,7 +35,7 @@ export function BriefingDigestStrip({
 }) {
   if (!summary && !loading && !error) return null;
   return (
-    <div className="px-5 py-3 border-b border-border bg-muted/20 shrink-0">
+    <div className="px-5 py-3 border-b border-border bg-muted/20 shrink-0 max-h-[140px] overflow-y-auto">
       <div className="flex items-center gap-2 mb-1.5">
         <svg
           width="12"
