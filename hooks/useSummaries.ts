@@ -79,7 +79,7 @@ export function useSummaries(opts: {
     emailFingerprintRef.current = fingerprint;
     setEmail((s) => ({ ...s, loading: true, error: false }));
     run("email", emailText);
-  }, [emailText, run]);
+  }, [emailText, email.text, run]);
 
   useEffect(() => {
     if (!chatText || chatText.length <= MIN_CONTENT_LENGTH) return;
@@ -88,7 +88,7 @@ export function useSummaries(opts: {
     chatFingerprintRef.current = fingerprint;
     setChat((s) => ({ ...s, loading: true, error: false }));
     run("chat", chatText);
-  }, [chatText, run]);
+  }, [chatText, chat.text, run]);
 
   useEffect(() => {
     if (!tasks || tasks.length === 0) return;
@@ -97,7 +97,7 @@ export function useSummaries(opts: {
     tasksFingerprintRef.current = tasksText;
     setTasksSummary((s) => ({ ...s, loading: true, error: false }));
     run("tasks", tasksText);
-  }, [tasks, run]);
+  }, [tasks, tasksSummary.text, run]);
 
   useEffect(() => {
     if (!hasGlobalInputs) return;
@@ -187,28 +187,10 @@ export function useSummaries(opts: {
     setGlobalText(null);
     setGlobalLoading(true);
 
-    if (emailText && emailText.length > MIN_CONTENT_LENGTH) {
-      setEmail({ text: null, loading: true, error: false, collapsed: email.collapsed });
-      run("email", emailText);
-    } else {
-      setEmail({ text: null, loading: false, error: false, collapsed: email.collapsed });
-    }
-
-    if (chatText && chatText.length > MIN_CONTENT_LENGTH) {
-      setChat({ text: null, loading: true, error: false, collapsed: chat.collapsed });
-      run("chat", chatText);
-    } else {
-      setChat({ text: null, loading: false, error: false, collapsed: chat.collapsed });
-    }
-
-    if (tasks && tasks.length > 0) {
-      const tasksText = tasks.map((t) => `- ${t.name} (${t.completed ? "Completed" : "Pending"})`).join("\n");
-      setTasksSummary({ text: null, loading: true, error: false, collapsed: tasksSummary.collapsed });
-      run("tasks", tasksText);
-    } else {
-      setTasksSummary({ text: null, loading: false, error: false, collapsed: tasksSummary.collapsed });
-    }
-  }, [emailText, chatText, tasks, email.collapsed, chat.collapsed, tasksSummary.collapsed, run]);
+    setEmail({ text: null, loading: true, error: false, collapsed: email.collapsed });
+    setChat({ text: null, loading: true, error: false, collapsed: chat.collapsed });
+    setTasksSummary({ text: null, loading: true, error: false, collapsed: tasksSummary.collapsed });
+  }, [email.collapsed, chat.collapsed, tasksSummary.collapsed]);
 
   return {
     email,
