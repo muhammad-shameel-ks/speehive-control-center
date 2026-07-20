@@ -7,6 +7,7 @@ import { LoadingSpinner } from "@/components/dashboard/panels/LoadingSpinner";
 import { InitialAvatar } from "@/components/dashboard/panels/InitialAvatar";
 import { parseChats } from "@/lib/parser";
 import type { ParsedChat } from "@/lib/types/briefing";
+import type { DigestRef } from "@/lib/integrations/api-client";
 import { ClickableDigest } from "@/components/dashboard/panels/ClickableDigest";
 
 type ChatSummary = {
@@ -19,6 +20,7 @@ type ChatSummary = {
 export function ChatColumn({
   ms365Connected,
   chatSummary,
+  chatRefs,
   onToggleSummaryCollapsed,
   onOpenChat,
   text,
@@ -28,6 +30,7 @@ export function ChatColumn({
 }: {
   ms365Connected: boolean;
   chatSummary: ChatSummary;
+  chatRefs?: DigestRef[];
   onToggleSummaryCollapsed: () => void;
   onOpenChat: (chat: ParsedChat) => void;
   text: string | null;
@@ -99,6 +102,7 @@ export function ChatColumn({
                   text={chatSummary.text ?? ""}
                   source="TEAMS"
                   parsedChats={parsedChats}
+                  chatRefs={chatRefs}
                   onOpenChat={onOpenChat}
                 />
               </div>

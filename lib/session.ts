@@ -14,6 +14,7 @@ export type SessionData = {
   accessToken?: string;
   refreshToken?: string;
   expiresAt?: number;
+  workspaceGid?: string;
   state?: string;
   codeVerifier?: string;
   // Microsoft 365
@@ -35,6 +36,7 @@ function rowToSession(row: DbRow): SessionData {
     refreshToken: (row.asana_refresh_token as string) ?? undefined,
     expiresAt: (row.asana_expires_at as number) ?? undefined,
     state: (row.asana_state as string) ?? undefined,
+    workspaceGid: (row.asana_workspace_gid as string) ?? undefined,
     codeVerifier: (row.asana_code_verifier as string) ?? undefined,
     ms365AccessToken: (row.ms365_access_token as string) ?? undefined,
     ms365RefreshToken: (row.ms365_refresh_token as string) ?? undefined,
@@ -52,6 +54,7 @@ function patchToRow(patch: Partial<SessionData>): DbRow {
   if ("accessToken" in patch) row.asana_access_token = patch.accessToken ?? null;
   if ("refreshToken" in patch) row.asana_refresh_token = patch.refreshToken ?? null;
   if ("expiresAt" in patch) row.asana_expires_at = patch.expiresAt ?? null;
+  if ("workspaceGid" in patch) row.asana_workspace_gid = patch.workspaceGid ?? null;
   if ("state" in patch) row.asana_state = patch.state ?? null;
   if ("codeVerifier" in patch) row.asana_code_verifier = patch.codeVerifier ?? null;
   if ("ms365AccessToken" in patch) row.ms365_access_token = patch.ms365AccessToken ?? null;
@@ -117,6 +120,7 @@ export async function clearSession(): Promise<void> {
       asana_access_token: null,
       asana_refresh_token: null,
       asana_expires_at: null,
+      asana_workspace_gid: null,
     })
     .eq("user_id", user.id);
 }

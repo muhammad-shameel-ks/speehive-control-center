@@ -144,7 +144,9 @@ function formatChatsAsText(data: unknown, currentUser?: Ms365User): string {
         ? `BUBBLE|RECV|${fallbackSender}||${fallbackText.slice(0, 200)}`
         : "";
 
-      return `### ${topic} · ${lastDate}\n${linkLine}${bubbleLines || fallbackLine}`;
+      const chatTypeTag = c.chatType ?? "unknown";
+      const chatIdTag = c.id ?? "";
+      return `### ${chatTypeTag}|${chatIdTag}|${topic} · ${lastDate}\n${linkLine}${bubbleLines || fallbackLine}`;
     })
     .join("\n\n---\n\n");
 }

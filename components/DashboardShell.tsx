@@ -58,8 +58,10 @@ export function DashboardShell({}: { searchParams?: { asana?: string; asana_erro
 
   const summaries = useSummaries({
     emailText: ms365.mailText,
-    chatText: ms365.teamsText,
+    chatText: chats.text,
     tasks: asana.tasks,
+    ms365Status: ms365.state.status,
+    asanaStatus: asana.state.status,
   });
 
   const mutations = useTaskMutations({
@@ -133,12 +135,9 @@ export function DashboardShell({}: { searchParams?: { asana?: string; asana_erro
                 onOpenBriefing={(tab) => {
                   briefing.openBriefing(tab);
                 }}
-                onOpenEmail={briefing.openForEmail}
                 onOpenChat={briefing.openForChat}
-                onOpenTask={briefing.openForTask}
-                parsedEmails={parsedEmails}
                 parsedChats={parsedChats}
-                asanaTasks={asana.tasks}
+                globalRefs={summaries.globalRefs}
               />
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -147,6 +146,7 @@ export function DashboardShell({}: { searchParams?: { asana?: string; asana_erro
                   emailSummary={summaries.email}
                   onToggleSummaryCollapsed={() => summaries.setEmailCollapsed(!summaries.email.collapsed)}
                   onOpenEmail={briefing.openForEmail}
+                  onOpenTab={briefing.openBriefing}
                   text={inbox.text}
                   syncing={inbox.syncing}
                   loadingMore={inbox.loadingMore}
@@ -158,6 +158,7 @@ export function DashboardShell({}: { searchParams?: { asana?: string; asana_erro
                 <ChatColumn
                   ms365Connected={isConnected}
                   chatSummary={summaries.chat}
+                  chatRefs={summaries.chatRefs}
                   onToggleSummaryCollapsed={() => summaries.setChatCollapsed(!summaries.chat.collapsed)}
                   onOpenChat={briefing.openForChat}
                   text={chats.text}
@@ -180,6 +181,7 @@ export function DashboardShell({}: { searchParams?: { asana?: string; asana_erro
                     await mutations.addInline(mutations.inlineInput);
                   }}
                   onOpenTask={briefing.openForTask}
+                  onOpenTab={briefing.openBriefing}
                 />
               </div>
             </>
@@ -261,6 +263,10 @@ export function DashboardShell({}: { searchParams?: { asana?: string; asana_erro
         parsedChats={parsedChats}
         asanaTasks={asana.tasks}
         asanaSyncing={asana.syncing}
+        chatRefs={summaries.chatRefs}
+        globalRefs={summaries.globalRefs}
+        emailRefs={summaries.emailRefs}
+        taskRefs={summaries.taskRefs}
         onReplyEmail={(email) => {
           briefing.close();
           openReplyForEmail(email);
@@ -282,6 +288,7 @@ export function DashboardShell({}: { searchParams?: { asana?: string; asana_erro
         setInlineTaskInput={mutations.setInlineInput}
         initialEmail={briefing.initialEmail}
         initialChat={briefing.initialChat}
+        initialChatMessageIndex={briefing.initialChatMessageIndex}
         initialTask={briefing.initialTask}
       />
 

@@ -41,19 +41,21 @@ The dashboard is split into focused modules — start at `components/DashboardSh
 
 # Integrations
 
-Two integrations: **Asana** (MCP) and **Microsoft 365** (Work IQ MCP). Google is fully removed.
+Two integrations: **Asana** (REST API) and **Microsoft 365** (Graph API). Google is fully removed.
 
-- Asana: `lib/asana-mcp.ts` (MCP client), `app/api/asana/*` (login/callback/config/tasks), `hooks/useAsanaConnection`, `components/integration-settings/AsanaSettings.tsx`.
+- Asana: `lib/asana-api.ts` (REST client), `app/api/asana/*` (login/callback/config/tasks), `hooks/useAsanaConnection`, `components/integration-settings/AsanaSettings.tsx`.
 - Microsoft 365: `lib/ms365-graph.ts` (Graph fetchers), `lib/ms365-oauth.ts` (PKCE), `app/api/ms365/*` (login/callback/config/[tool]/disconnect), `hooks/useMs365Connection`.
 
 Shared OAuth helpers live in `lib/oauth/pkce.ts`. Typed API wrappers live in `lib/integrations/api-client.ts`. The "Refresh All" button calls `lib/integrations/refresh-all.ts`.
 
-# Asana MCP integration details
+# Asana REST API integration details
 
-- Official server: `https://mcp.asana.com/v2/mcp` (V1 SSE is deprecated, shuts down 2026-05-11).
-- Auth: OAuth 2.0 with PKCE. Pre-register an MCP app at `app.asana.com/0/my-apps` (type: **MCP app**); tokens are valid only for the MCP server, not the REST API. Add `http://localhost:3000/api/asana/callback` as a redirect URL.
-- Credentials are pasted into the in-app settings panel, not env vars. Stored in an in-memory `Map` keyed by an httpOnly session cookie (`sh_sid` in `lib/session.ts`) — lost on server restart, fine for demo.
-- The UI calls `get_my_tasks` via the official SDK (`@modelcontextprotocol/sdk`) using `StreamableHTTPClientTransport`. The bearer token is passed via `requestInit.headers.Authorization`; no `OAuthClientProvider` is used because we manage the OAuth flow ourselves.
+- API base: `https://app.asana.com/api/1.0`. All calls go through `lib/asana-api.ts` (`asanaFetch` wrapper with `[asana]` dev logging).
+- Auth: OAuth 2.0 with PKCE. Pre-register an **API app** at `app.asana.com/0/my-apps` (type: **API app**, not MCP app). MCP app tokens only work against the MCP server, not the REST API.
+- Credentials: env vars (`ASANA_CLIENT_ID`, `ASANA_CLIENT_SECRET`) take priority, fallback to in-app settings stored in Supabase `user_integrations` table.
+- Endpoints used: `GET /tasks?assignee=me&workspace=...` (list tasks), `POST /tasks` (create), `PUT /tasks/{gid}` (update), `GET /workspaces` (list workspaces).
+- AI chat tools are hardcoded in `lib/asana-tools.ts` (not dynamically listed from MCP). Tools: `get_workspaces`, `get_my_tasks`, `create_task`, `update_task`.
+- The `workspaceGid` is cached in the `user_integrations` table after first fetch.
 - `cookies()` in Next.js 16 is **async** — `await cookies()` everywhere.
 
 # Verification commands
@@ -70,7 +72,6 @@ Shared OAuth helpers live in `lib/oauth/pkce.ts`. Typed API wrappers live in `li
 # Conventions worth knowing
 
 - `cookies()` is async. `headers()` too.
-- The MCP SDK (`@modelcontextprotocol/sdk`) is ESM-only; importing it from a Route Handler works because Next.js handles ESM natively.
 - `tsconfig.json` `paths`: `@/*` → `./*`. Use `@/lib/...`, `@/components/...`, `@/hooks/...`, etc.
 - No `src/` dir. `app/` is at the project root.
 - All stateful client logic lives in `hooks/`. All shared types in `lib/types/`. All API calls go through `lib/integrations/api-client.ts`.

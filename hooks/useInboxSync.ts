@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { syncOutlookMail, extractMcpTextContent } from "@/lib/integrations/api-client";
+import { syncOutlookMail, extractTextContent } from "@/lib/integrations/api-client";
 import type { ApiState } from "@/lib/types/integrations";
 import { MAIL_PAGE_SIZE } from "@/lib/types/integrations";
 
@@ -23,7 +23,7 @@ export function useInboxSync(enabled: boolean) {
     try {
       const res: ApiState = await syncOutlookMail(0);
       if (res.state === "connected") {
-        setText(extractMcpTextContent(res.result));
+        setText(extractTextContent(res.result));
         setSkip(MAIL_PAGE_SIZE);
         setHasMore(Boolean(res.hasMore));
       } else {
@@ -45,7 +45,7 @@ export function useInboxSync(enabled: boolean) {
       const res: ApiState = await syncOutlookMail(skip);
       if (res.state === "connected") {
         if ((res.messageCount ?? 0) > 0) {
-          const newText = extractMcpTextContent(res.result);
+          const newText = extractTextContent(res.result);
           setText((prev) => {
             if (!prev || prev === "Failed to fetch Outlook mail.") return newText;
             return `${prev}\n\n---\n\n${newText}`;

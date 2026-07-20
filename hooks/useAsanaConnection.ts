@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { getAsanaConfig, syncAsana, postAsanaTool, extractMcpTextContent, parseAsanaTasksFromResult } from "@/lib/integrations/api-client";
+import { getAsanaConfig, syncAsana, postAsanaTool } from "@/lib/integrations/api-client";
 import type { AsanaConnectionState, AsanaTask } from "@/lib/types/integrations";
 import { DEFAULT_ASANA_WORKSPACE_GID } from "@/lib/types/integrations";
 
@@ -18,8 +18,11 @@ export function useAsanaConnection() {
         if (data.connected) {
           setState({ status: "connected", workspaceGid: null });
           syncAsana().then((res) => {
+            if (cancelled) return;
             if (res.state === "connected") {
-              const parsed = parseAsanaTasksFromResult(res.result);
+              const result = res.result;
+              const parsed: AsanaTask[] | null =
+                Array.isArray(result) ? result as AsanaTask[] : null;
               setTasks(parsed);
               if (parsed && parsed.length > 0) {
                 const firstWithWorkspace = parsed.find((t) => t.workspace?.gid);
@@ -27,6 +30,9 @@ export function useAsanaConnection() {
                   setState((s) => ({ ...s, workspaceGid: firstWithWorkspace.workspace!.gid }));
                 }
               }
+              console.log(`[asana] initial load: ${parsed?.length ?? 0} tasks, result type: ${typeof result}, isArray: ${Array.isArray(result)}`);
+            } else {
+              console.log("[asana] initial sync failed:", res.state, (res as { error?: string }).error);
             }
           });
         } else {
@@ -47,7 +53,9 @@ export function useAsanaConnection() {
     try {
       const res = await syncAsana();
       if (res.state === "connected") {
-        const parsed = parseAsanaTasksFromResult(res.result);
+        const result = res.result;
+        const parsed: AsanaTask[] | null =
+          Array.isArray(result) ? result as AsanaTask[] : null;
         setTasks(parsed);
         if (parsed && parsed.length > 0) {
           const firstWithWorkspace = parsed.find((t) => t.workspace?.gid);
@@ -90,9 +98,8 @@ export function useAsanaConnection() {
     try {
       const res = await postAsanaTool({ toolName: "get_workspaces", arguments: {} });
       if (res.state === "connected") {
-        const text = extractMcpTextContent(res.result);
-        const parsed = JSON.parse(text) as { data?: Array<{ gid: string }> };
-        const gid = parsed.data?.[0]?.gid;
+        const workspaces = res.result as Array<{ gid: string }>;
+        const gid = workspaces?.[0]?.gid;
         if (gid) {
           setState((s) => ({ ...s, workspaceGid: gid }));
           return gid;

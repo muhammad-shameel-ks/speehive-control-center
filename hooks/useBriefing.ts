@@ -10,11 +10,13 @@ export function useBriefing() {
   const [initialEmail, setInitialEmail] = useState<ParsedEmail | null>(null);
   const [initialChat, setInitialChat] = useState<ParsedChat | null>(null);
   const [initialTask, setInitialTask] = useState<AsanaTask | null>(null);
+  const [initialChatMessageIndex, setInitialChatMessageIndex] = useState<number | null>(null);
 
   const openBriefing = useCallback((next: BriefingTab) => {
     setInitialEmail(null);
     setInitialChat(null);
     setInitialTask(null);
+    setInitialChatMessageIndex(null);
     setTab(next);
     setOpen(true);
   }, []);
@@ -22,15 +24,17 @@ export function useBriefing() {
   const openForEmail = useCallback((email: ParsedEmail) => {
     setInitialChat(null);
     setInitialTask(null);
+    setInitialChatMessageIndex(null);
     setInitialEmail(email);
     setTab("mail");
     setOpen(true);
   }, []);
 
-  const openForChat = useCallback((chat: ParsedChat) => {
+  const openForChat = useCallback((chat: ParsedChat, msgIndex?: number) => {
     setInitialEmail(null);
     setInitialTask(null);
     setInitialChat(chat);
+    setInitialChatMessageIndex(msgIndex !== undefined ? msgIndex : null);
     setTab("teams");
     setOpen(true);
   }, []);
@@ -38,7 +42,7 @@ export function useBriefing() {
   const openForTask = useCallback((task: AsanaTask) => {
     setInitialEmail(null);
     setInitialChat(null);
-    setInitialEmail(null);
+    setInitialChatMessageIndex(null);
     setInitialTask(task);
     setTab("asana");
     setOpen(true);
@@ -53,6 +57,7 @@ export function useBriefing() {
     tab,
     initialEmail,
     initialChat,
+    initialChatMessageIndex,
     initialTask,
     openBriefing,
     openForEmail,

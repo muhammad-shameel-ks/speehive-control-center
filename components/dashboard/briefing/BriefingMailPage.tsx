@@ -6,6 +6,7 @@ import { InitialAvatar } from "@/components/dashboard/panels/InitialAvatar";
 import { EmptyState } from "@/components/dashboard/panels/EmptyState";
 import { PlusIcon, SparklesIcon } from "@/components/icons";
 import type { ParsedEmail } from "@/lib/types/briefing";
+import type { EmailDigestRef } from "@/lib/integrations/api-client";
 
 export function BriefingMailPage({
   parsedEmails,
@@ -14,6 +15,7 @@ export function BriefingMailPage({
   loading,
   error,
   onRetry,
+  emailRefs,
   onReplyEmail,
   onCreateTaskFromEmail,
 }: {
@@ -23,6 +25,7 @@ export function BriefingMailPage({
   loading: boolean;
   error: boolean;
   onRetry: () => void;
+  emailRefs?: EmailDigestRef[];
   onReplyEmail: (email: ParsedEmail) => void;
   onCreateTaskFromEmail: (email: ParsedEmail) => void;
 }) {
@@ -45,6 +48,7 @@ export function BriefingMailPage({
         color="#5B9FD4"
         source="MAIL"
         parsedEmails={parsedEmails}
+        emailRefs={emailRefs}
         onOpenEmail={setSelected}
       />
 

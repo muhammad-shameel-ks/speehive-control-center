@@ -3,8 +3,9 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { ClickableDigest } from "@/components/dashboard/panels/ClickableDigest";
-import { type SummarySource, type ParsedEmail, type ParsedChat } from "@/lib/types/briefing";
+import { type SummarySource, type ParsedEmail, type ParsedChat, type BriefingTab } from "@/lib/types/briefing";
 import type { AsanaTask } from "@/lib/types/integrations";
+import type { DigestRef, EmailDigestRef, TaskDigestRef } from "@/lib/integrations/api-client";
 
 export function BriefingDigestStrip({
   summary,
@@ -16,9 +17,14 @@ export function BriefingDigestStrip({
   parsedEmails,
   parsedChats,
   asanaTasks,
+  chatRefs,
+  globalRefs,
+  emailRefs,
+  taskRefs,
   onOpenEmail,
   onOpenChat,
   onOpenTask,
+  onOpenTab,
 }: {
   summary: string | null;
   loading: boolean;
@@ -29,9 +35,14 @@ export function BriefingDigestStrip({
   parsedEmails?: ParsedEmail[];
   parsedChats?: ParsedChat[];
   asanaTasks?: AsanaTask[] | null;
+  chatRefs?: DigestRef[];
+  globalRefs?: (DigestRef | null)[];
+  emailRefs?: EmailDigestRef[];
+  taskRefs?: TaskDigestRef[];
   onOpenEmail?: (email: ParsedEmail) => void;
-  onOpenChat?: (chat: ParsedChat) => void;
+  onOpenChat?: (chat: ParsedChat, messageIndex?: number) => void;
   onOpenTask?: (task: AsanaTask) => void;
+  onOpenTab?: (tab: BriefingTab) => void;
 }) {
   if (!summary && !loading && !error) return null;
   return (
@@ -73,7 +84,7 @@ export function BriefingDigestStrip({
             </button>
           )}
         </div>
-      ) : source && (parsedEmails || parsedChats || asanaTasks) ? (
+      ) : source ? (
         <div className="leading-relaxed">
           <ClickableDigest
             text={summary ?? ""}
@@ -81,9 +92,14 @@ export function BriefingDigestStrip({
             parsedEmails={parsedEmails}
             parsedChats={parsedChats}
             asanaTasks={asanaTasks}
+            chatRefs={chatRefs}
+            globalRefs={globalRefs}
+            emailRefs={emailRefs}
+            taskRefs={taskRefs}
             onOpenEmail={onOpenEmail}
             onOpenChat={onOpenChat}
             onOpenTask={onOpenTask}
+            onOpenTab={onOpenTab}
           />
         </div>
       ) : (

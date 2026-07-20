@@ -9,8 +9,9 @@ import { BriefingAsanaPage } from "@/components/dashboard/briefing/BriefingAsana
 import type { BriefingTab } from "@/lib/types/briefing";
 import type { ParsedEmail, ParsedChat } from "@/lib/types/briefing";
 import type { AsanaTask } from "@/lib/types/integrations";
+import type { DigestRef, EmailDigestRef, TaskDigestRef } from "@/lib/integrations/api-client";
 
-export type BriefingModalProps = {
+type BriefingModalProps = {
   open: boolean;
   onClose: () => void;
   activeTab: BriefingTab;
@@ -31,6 +32,10 @@ export type BriefingModalProps = {
   parsedChats: ParsedChat[];
   asanaTasks: AsanaTask[] | null;
   asanaSyncing: boolean;
+  chatRefs?: DigestRef[];
+  globalRefs?: (DigestRef | null)[];
+  emailRefs?: EmailDigestRef[];
+  taskRefs?: TaskDigestRef[];
   onReplyEmail: (email: ParsedEmail) => void;
   onCreateTaskFromEmail: (email: ParsedEmail) => void;
   onReplyChat: (chat: ParsedChat) => void;
@@ -40,8 +45,11 @@ export type BriefingModalProps = {
   setInlineTaskInput: (v: string) => void;
   initialEmail?: ParsedEmail | null;
   initialChat?: ParsedChat | null;
+  initialChatMessageIndex?: number | null;
   initialTask?: AsanaTask | null;
 };
+
+
 
 export function BriefingModal({
   open,
@@ -64,6 +72,10 @@ export function BriefingModal({
   parsedChats,
   asanaTasks,
   asanaSyncing,
+  chatRefs,
+  globalRefs,
+  emailRefs,
+  taskRefs,
   onReplyEmail,
   onCreateTaskFromEmail,
   onReplyChat,
@@ -73,6 +85,7 @@ export function BriefingModal({
   setInlineTaskInput,
   initialEmail,
   initialChat,
+  initialChatMessageIndex,
   initialTask,
 }: BriefingModalProps) {
   return (
@@ -128,6 +141,7 @@ export function BriefingModal({
             loading={emailSummaryLoading}
             error={emailSummaryError}
             onRetry={onRetryEmailSummary}
+            emailRefs={emailRefs}
             onReplyEmail={(email) => onReplyEmail(email)}
             onCreateTaskFromEmail={(email) => onCreateTaskFromEmail(email)}
           />
@@ -137,11 +151,14 @@ export function BriefingModal({
           <BriefingTeamsPage
             parsedChats={parsedChats}
             initialChat={initialChat ?? null}
+            initialChatMessageIndex={initialChatMessageIndex ?? null}
             summary={chatSummary}
             loading={chatSummaryLoading}
             error={chatSummaryError}
             onRetry={onRetryChatSummary}
             onReplyChat={(chat) => onReplyChat(chat)}
+            chatRefs={chatRefs}
+            globalRefs={globalRefs}
           />
         )}
 
@@ -158,6 +175,7 @@ export function BriefingModal({
             onInlineAddTask={onInlineAddTask}
             inlineTaskInput={inlineTaskInput}
             setInlineTaskInput={setInlineTaskInput}
+            taskRefs={taskRefs}
           />
         )}
       </DialogContent>

@@ -5,6 +5,7 @@ import { BriefingDigestStrip } from "@/components/dashboard/briefing/BriefingDig
 import { EmptyState } from "@/components/dashboard/panels/EmptyState";
 import { partitionByCompleted } from "@/lib/utils/array";
 import type { AsanaTask } from "@/lib/types/integrations";
+import type { TaskDigestRef } from "@/lib/integrations/api-client";
 
 export function BriefingAsanaPage({
   asanaTasks,
@@ -18,6 +19,7 @@ export function BriefingAsanaPage({
   onInlineAddTask,
   inlineTaskInput,
   setInlineTaskInput,
+  taskRefs,
 }: {
   asanaTasks: AsanaTask[] | null;
   initialTask?: AsanaTask | null;
@@ -30,6 +32,7 @@ export function BriefingAsanaPage({
   onInlineAddTask: (e: React.FormEvent) => void;
   inlineTaskInput: string;
   setInlineTaskInput: (v: string) => void;
+  taskRefs?: TaskDigestRef[];
 }) {
   const [tab, setTab] = useState<"pending" | "done" | "all">("pending");
   const [selected, setSelected] = useState<AsanaTask | null>(initialTask ?? null);
@@ -54,6 +57,7 @@ export function BriefingAsanaPage({
         color="#60C83A"
         source="ASANA"
         asanaTasks={asanaTasks}
+        taskRefs={taskRefs}
         onOpenTask={setSelected}
       />
 

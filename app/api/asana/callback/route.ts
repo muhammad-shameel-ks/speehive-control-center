@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAsanaServerConfig } from "@/lib/asana-server-config";
-import { exchangeCodeForTokens } from "@/lib/asana-mcp";
+import { exchangeCodeForTokens } from "@/lib/asana-api";
 import { getSession, updateSession } from "@/lib/session";
 
 export async function GET(request: Request) {

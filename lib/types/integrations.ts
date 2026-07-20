@@ -31,10 +31,6 @@ export type ApiState =
   | { state: "connected"; result: unknown; hasMore?: boolean; messageCount?: number }
   | { state: "error"; error: string };
 
-export type McpTextResult = {
-  content: Array<{ type: "text"; text: string }>;
-};
-
 export type ConfigResponse = {
   source: "env" | null;
   connected: boolean;

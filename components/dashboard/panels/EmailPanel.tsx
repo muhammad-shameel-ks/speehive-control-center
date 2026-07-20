@@ -5,7 +5,7 @@ import { EmptyState } from "@/components/dashboard/panels/EmptyState";
 import { LoadingSpinner } from "@/components/dashboard/panels/LoadingSpinner";
 import { InitialAvatar } from "@/components/dashboard/panels/InitialAvatar";
 import { parseEmails } from "@/lib/parser";
-import type { ParsedEmail } from "@/lib/types/briefing";
+import type { ParsedEmail, BriefingTab } from "@/lib/types/briefing";
 import type { RefObject } from "react";
 import { ClickableDigest } from "@/components/dashboard/panels/ClickableDigest";
 
@@ -21,6 +21,7 @@ export function EmailPanel({
   emailSummary,
   onToggleSummaryCollapsed,
   onOpenEmail,
+  onOpenTab,
   text,
   syncing,
   loadingMore,
@@ -33,6 +34,7 @@ export function EmailPanel({
   emailSummary: EmailSummary;
   onToggleSummaryCollapsed: () => void;
   onOpenEmail: (email: ParsedEmail) => void;
+  onOpenTab: (tab: BriefingTab) => void;
   text: string | null;
   syncing: boolean;
   loadingMore: boolean;
@@ -106,8 +108,7 @@ export function EmailPanel({
               <ClickableDigest
                 text={emailSummary.text ?? ""}
                 source="MAIL"
-                parsedEmails={parsedEmails}
-                onOpenEmail={onOpenEmail}
+                onOpenTab={onOpenTab}
               />
             </div>
           )}

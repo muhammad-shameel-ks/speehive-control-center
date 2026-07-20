@@ -22,6 +22,7 @@ export interface ParsedEmail {
 }
 
 export interface ChatMessage {
+  id: string;
   sender: string;
   text: string;
   time: string;
@@ -37,6 +38,8 @@ export interface ParsedChat {
   raw: string;
   url?: string;
   messages?: ChatMessage[];
+  chatType?: "oneOnOne" | "group" | "meeting" | "unknown";
+  graphChatId?: string;
 }
 
 export function parseEmails(text: string | null): ParsedEmail[] {
@@ -117,27 +120,49 @@ export function parseChats(text: string | null): ParsedChat[] {
       if (!cleanSeg) return;
 
       const headerMatch = cleanSeg.match(/^###\s*(.*?)·\s*(.*)$/m);
-      const title = headerMatch ? headerMatch[1].trim() : "Direct Message";
+      const headerRaw = headerMatch ? headerMatch[1].trim() : "";
+      let title = "Direct Message";
+      let chatType: "oneOnOne" | "group" | "meeting" | "unknown" = "unknown";
+      let graphChatId: string | undefined;
       const date = headerMatch ? headerMatch[2].trim() : "";
+
+      const typePrefixMatch = headerRaw.match(/^(oneOnOne|group|meeting|unknown)\|([^|]*)\|(.*)$/);
+      if (typePrefixMatch) {
+        chatType = typePrefixMatch[1] as "oneOnOne" | "group" | "meeting" | "unknown";
+        graphChatId = typePrefixMatch[2] || undefined;
+        title = typePrefixMatch[3].trim();
+      } else {
+        title = headerRaw || "Direct Message";
+      }
 
       const allContentLines = cleanSeg.split("\n").slice(1);
       const linkMatch = allContentLines.find(l => l.startsWith("**Link:**"))?.match(/\*\*Link:\*\*\s*(https?:\/\/\S+)/);
       const url = linkMatch?.[1];
 
       const msgLines = allContentLines.filter(l => l.startsWith("BUBBLE|"));
-      const messages: ChatMessage[] = msgLines.map(l => {
+      const messages: ChatMessage[] = [];
+      msgLines.forEach((l, i) => {
         const parts = l.split("|");
-        if (parts.length < 5) return null;
+        if (parts.length < 5) return;
         const [, tag, sender, time, ...rest] = parts;
-        return { isSent: tag === "SENT", sender: decodeHtml(sender), time, text: decodeHtml(rest.join("|")) };
-      }).filter((x): x is ChatMessage => x !== null);
+        const text = decodeHtml(rest.join("|")).trim();
+        if (!text) return;
+        const chatIdForMsg = graphChatId || `ms365-chat-${idx}`;
+        messages.push({
+          id: `${chatIdForMsg}#msg${i}`,
+          isSent: tag === "SENT",
+          sender: decodeHtml(sender),
+          time,
+          text,
+        });
+      });
 
       const lastMsg = messages[messages.length - 1];
       const sender = lastMsg?.sender ?? "";
       const lastMessage = lastMsg?.text ?? "";
 
       parsed.push({
-        id: `ms365-chat-${idx}`,
+        id: graphChatId || `ms365-chat-${idx}`,
         title: decodeHtml(title),
         date,
         sender: decodeHtml(sender),
@@ -145,6 +170,8 @@ export function parseChats(text: string | null): ParsedChat[] {
         raw: decodeHtml(lastMessage),
         messages: messages.length > 0 ? messages : undefined,
         url,
+        chatType,
+        graphChatId,
       });
     });
 
@@ -161,7 +188,21 @@ export function parseChats(text: string | null): ParsedChat[] {
   }];
 }
 
-export function extractMcpTextContent(result: unknown): string {
+type AsanaTaskShape = { gid: string; name: string; completed: boolean; due_on?: string | null; workspace?: { gid: string } };
+
+export function parseAsanaTasks(data: unknown): AsanaTaskShape[] | null {
+  if (!Array.isArray(data)) return null;
+  return data.filter(
+    (t): t is AsanaTaskShape =>
+      typeof t === "object" &&
+      t !== null &&
+      typeof (t as { gid?: unknown }).gid === "string" &&
+      typeof (t as { name?: unknown }).name === "string" &&
+      typeof (t as { completed?: unknown }).completed === "boolean",
+  );
+}
+
+export function extractTextContent(result: unknown): string {
   if (!result || typeof result !== "object") return "";
   const r = result as { content?: unknown };
   if (!Array.isArray(r.content)) return "";
@@ -176,15 +217,17 @@ export function extractMcpTextContent(result: unknown): string {
     .join("");
 }
 
-type AsanaTaskShape = { gid: string; name: string; completed: boolean; due_on?: string | null; workspace?: { gid: string } };
+export function findChatById(chats: ParsedChat[], chatId: string | null | undefined): ParsedChat | undefined {
+  if (!chatId) return undefined;
+  return chats.find((c) => c.graphChatId === chatId || c.id === chatId);
+}
 
-export function parseAsanaTasksFromResult(result: unknown): AsanaTaskShape[] | null {
-  const text = extractMcpTextContent(result);
-  if (!text) return null;
-  try {
-    const parsed = JSON.parse(text) as { data?: AsanaTaskShape[] };
-    return Array.isArray(parsed.data) ? parsed.data : null;
-  } catch {
-    return null;
-  }
+export function findEmailById(emails: ParsedEmail[], emailId: string | null | undefined): ParsedEmail | undefined {
+  if (!emailId) return undefined;
+  return emails.find((e) => e.id === emailId);
+}
+
+export function findTaskByGid<T extends { gid: string }>(tasks: T[] | null, gid: string | null | undefined): T | undefined {
+  if (!gid || !tasks) return undefined;
+  return tasks.find((t) => t.gid === gid);
 }

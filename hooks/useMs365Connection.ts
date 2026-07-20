@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { getMs365Config, syncOutlookMail, syncMs365Teams, extractMcpTextContent } from "@/lib/integrations/api-client";
+import { getMs365Config, syncOutlookMail, syncMs365Teams, extractTextContent } from "@/lib/integrations/api-client";
 import type { Ms365ConnectionState } from "@/lib/types/integrations";
 import { MAIL_PAGE_SIZE } from "@/lib/types/integrations";
 
@@ -10,9 +10,7 @@ const initialState: Ms365ConnectionState = { status: "loading", user: null };
 export function useMs365Connection() {
   const [state, setState] = useState<Ms365ConnectionState>(initialState);
   const [mailText, setMailText] = useState<string | null>(null);
-  const [teamsText, setTeamsText] = useState<string | null>(null);
   const [mailSyncing, setMailSyncing] = useState(false);
-  const [teamsSyncing, setTeamsSyncing] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -25,10 +23,7 @@ export function useMs365Connection() {
         });
         if (data.connected) {
           syncOutlookMail(0).then((res) => {
-            if (res.state === "connected") setMailText(extractMcpTextContent(res.result));
-          });
-          syncMs365Teams().then((res) => {
-            if (res.state === "connected") setTeamsText(extractMcpTextContent(res.result));
+            if (res.state === "connected") setMailText(extractTextContent(res.result));
           });
         }
       })
@@ -46,7 +41,7 @@ export function useMs365Connection() {
     try {
       const res = await syncOutlookMail(0);
       if (res.state === "connected") {
-        setMailText(extractMcpTextContent(res.result));
+        setMailText(extractTextContent(res.result));
       }
     } catch {
       setMailText("Failed to fetch Outlook mail.");
@@ -55,26 +50,11 @@ export function useMs365Connection() {
     }
   }, []);
 
-  const refreshTeams = useCallback(async () => {
-    setTeamsSyncing(true);
-    try {
-      const res = await syncMs365Teams();
-      if (res.state === "connected") setTeamsText(extractMcpTextContent(res.result));
-    } catch {
-      setTeamsText("Failed to fetch Teams chats.");
-    } finally {
-      setTeamsSyncing(false);
-    }
-  }, []);
-
   return {
     state,
     mailText,
-    teamsText,
     mailSyncing,
-    teamsSyncing,
     refreshMail,
-    refreshTeams,
     mailPageSize: MAIL_PAGE_SIZE,
   };
 }
@@ -88,7 +68,7 @@ export function useChatsSync(enabled: boolean) {
     setSyncing(true);
     try {
       const res = await syncMs365Teams();
-      if (res.state === "connected") setText(extractMcpTextContent(res.result));
+      if (res.state === "connected") setText(extractTextContent(res.result));
       else setText(null);
     } catch {
       setText("Failed to fetch Teams chats.");

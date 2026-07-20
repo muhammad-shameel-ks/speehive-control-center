@@ -4,7 +4,6 @@ import { makePkcePair, randomState } from "@/lib/oauth/pkce";
 import { getSession, updateSession } from "@/lib/session";
 
 const ASANA_AUTH_URL = "https://app.asana.com/-/oauth_authorize";
-const ASANA_MCP_RESOURCE = "https://mcp.asana.com/v2";
 
 export async function GET(request: Request) {
   const config = await getAsanaServerConfig();
@@ -26,10 +25,11 @@ export async function GET(request: Request) {
   authorizeUrl.searchParams.set("client_id", config.clientId);
   authorizeUrl.searchParams.set("redirect_uri", redirectUri);
   authorizeUrl.searchParams.set("response_type", "code");
-  authorizeUrl.searchParams.set("resource", ASANA_MCP_RESOURCE);
+  authorizeUrl.searchParams.set("scope", "default");
   authorizeUrl.searchParams.set("state", state);
   authorizeUrl.searchParams.set("code_challenge", challenge);
   authorizeUrl.searchParams.set("code_challenge_method", "S256");
 
+  console.log("[asana] initiating OAuth flow — no MCP resource param (REST API scope)");
   return NextResponse.redirect(authorizeUrl);
 }

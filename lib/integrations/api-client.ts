@@ -1,7 +1,5 @@
 import type { ApiState, ConfigResponse, Ms365User } from "@/lib/types/integrations";
-import { extractMcpTextContent as extractMcpTextContentFromResult, parseAsanaTasksFromResult as parseAsanaTasksFromResultHelper } from "@/lib/parser";
-
-export { extractMcpTextContentFromResult as extractMcpTextContent, parseAsanaTasksFromResultHelper as parseAsanaTasksFromResult };
+export { extractTextContent } from "@/lib/parser";
 
 async function fetchJson<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
   const res = await fetch(input, { cache: "no-store", ...init });
@@ -48,6 +46,43 @@ export async function generateSummary(type: SummaryType, content: string): Promi
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ type, content }),
+  });
+}
+
+export type DigestRef = {
+  chatId: string;
+  messageIndex?: number;
+};
+
+export type EmailDigestRef = {
+  emailId: string;
+};
+
+export type TaskDigestRef = {
+  taskGid: string;
+};
+
+export type UnifiedSummaryResponse = {
+  emailSummary: string;
+  chatSummary: string;
+  tasksSummary: string;
+  globalDigest: string;
+  chatRefs?: DigestRef[];
+  globalRefs?: (DigestRef | null)[];
+  emailRefs?: EmailDigestRef[];
+  taskRefs?: TaskDigestRef[];
+  error?: string;
+};
+
+export async function generateUnifiedSummary(args: {
+  emailContent: string;
+  chatContent: string;
+  tasksContent: string;
+}): Promise<UnifiedSummaryResponse> {
+  return fetchJson<UnifiedSummaryResponse>("/api/ai/summary", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(args),
   });
 }
 

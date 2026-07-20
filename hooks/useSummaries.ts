@@ -1,7 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { generateSummary as generateSummaryRequest, type SummaryType } from "@/lib/integrations/api-client";
+import { useCallback, useEffect, useState } from "react";
+import { generateUnifiedSummary } from "@/lib/integrations/api-client";
+import type { DigestRef, EmailDigestRef, TaskDigestRef } from "@/lib/integrations/api-client";
+import type { ConnectionStatus } from "@/lib/types/integrations";
 
 type SummaryState = {
   text: string | null;
@@ -10,201 +12,194 @@ type SummaryState = {
   collapsed: boolean;
 };
 
+type DigestTask = { name: string; completed: boolean; gid: string };
+
 function initialState(collapsed: boolean): SummaryState {
   return { text: null, loading: false, error: false, collapsed };
 }
 
 const MIN_CONTENT_LENGTH = 50;
 const FINGERPRINT_PREFIX_LEN = 1500;
-const GLOBAL_DEBOUNCE_MS = 500;
+
+function cleanEmailText(text: string | null): string {
+  if (!text) return "";
+  return text.replace(/\*\*HTML:\*\*\s*\S+/g, "").trim();
+}
+
+function getFingerprint(
+  emailText: string | null,
+  chatText: string | null,
+  tasks: DigestTask[] | null
+) {
+  const cleanEmail = emailText && emailText.length > MIN_CONTENT_LENGTH ? cleanEmailText(emailText).slice(0, FINGERPRINT_PREFIX_LEN) : "";
+  const cleanChat = chatText && chatText.length > MIN_CONTENT_LENGTH ? chatText.slice(0, FINGERPRINT_PREFIX_LEN) : "";
+  const cleanTasks = tasks && tasks.length > 0
+    ? tasks.map((t) => `- ${t.name} (id:${t.gid}, ${t.completed ? "Completed" : "Pending"})`).join("\n")
+    : "";
+  return `${cleanEmail}|${cleanChat}|${cleanTasks}`;
+}
 
 export function useSummaries(opts: {
   emailText: string | null;
   chatText: string | null;
-  tasks: { name: string; completed: boolean }[] | null;
+  tasks: DigestTask[] | null;
+  ms365Status: ConnectionStatus;
+  asanaStatus: ConnectionStatus;
 }) {
-  const { emailText, chatText, tasks } = opts;
-  const hasGlobalInputs = true;
+  const { emailText, chatText, tasks, ms365Status, asanaStatus } = opts;
+
   const [email, setEmail] = useState<SummaryState>(initialState(true));
   const [chat, setChat] = useState<SummaryState>(initialState(true));
   const [tasksSummary, setTasksSummary] = useState<SummaryState>(initialState(true));
   const [globalText, setGlobalText] = useState<string | null>(null);
   const [globalLoading, setGlobalLoading] = useState(false);
   const [globalCollapsed, setGlobalCollapsed] = useState(false);
+  const [chatRefs, setChatRefs] = useState<DigestRef[]>([]);
+  const [globalRefs, setGlobalRefs] = useState<(DigestRef | null)[]>([]);
+  const [emailRefs, setEmailRefs] = useState<EmailDigestRef[]>([]);
+  const [taskRefs, setTaskRefs] = useState<TaskDigestRef[]>([]);
 
-  const emailFingerprintRef = useRef<string>("");
-  const chatFingerprintRef = useRef<string>("");
-  const tasksFingerprintRef = useRef<string>("");
-  const globalFingerprintRef = useRef<string>("");
-
-  const run = useCallback(
-    async (type: SummaryType, content: string) => {
-      const setState = (mut: (s: SummaryState) => SummaryState) => {
-        if (type === "email") setEmail((s) => mut(s));
-        else if (type === "chat") setChat((s) => mut(s));
-        else if (type === "tasks") setTasksSummary((s) => mut(s));
-      };
-
-      if (type !== "global") {
-        setState((s) => ({ ...s, loading: true, error: false }));
-      }
-      try {
-        const res = await generateSummaryRequest(type, content);
-        if (res.summary) {
-          if (type === "global") {
-            setGlobalText(res.summary);
-          } else {
-            setState((s) => ({ ...s, text: res.summary!, loading: false }));
-          }
-        } else {
-          if (type !== "global") {
-            setState((s) => ({ ...s, loading: false, error: true }));
-          }
-        }
-      } catch {
-        if (type !== "global") {
-          setState((s) => ({ ...s, loading: false, error: true }));
-        }
-      } finally {
-        if (type === "global") setGlobalLoading(false);
-      }
-    },
-    [],
-  );
-
-  useEffect(() => {
-    if (!emailText || emailText.length <= MIN_CONTENT_LENGTH) return;
-    const fingerprint = emailText.slice(0, FINGERPRINT_PREFIX_LEN);
-    if (fingerprint === emailFingerprintRef.current) return;
-    emailFingerprintRef.current = fingerprint;
+  const fetchUnifiedSummary = useCallback(async (
+    emailVal: string | null,
+    chatVal: string | null,
+    tasksVal: DigestTask[] | null
+  ) => {
     setEmail((s) => ({ ...s, loading: true, error: false }));
-    run("email", emailText);
-  }, [emailText, email.text, run]);
-
-  useEffect(() => {
-    if (!chatText || chatText.length <= MIN_CONTENT_LENGTH) return;
-    const fingerprint = chatText.slice(0, FINGERPRINT_PREFIX_LEN);
-    if (fingerprint === chatFingerprintRef.current) return;
-    chatFingerprintRef.current = fingerprint;
     setChat((s) => ({ ...s, loading: true, error: false }));
-    run("chat", chatText);
-  }, [chatText, chat.text, run]);
-
-  useEffect(() => {
-    if (!tasks || tasks.length === 0) return;
-    const tasksText = tasks.map((t) => `- ${t.name} (${t.completed ? "Completed" : "Pending"})`).join("\n");
-    if (tasksText === tasksFingerprintRef.current) return;
-    tasksFingerprintRef.current = tasksText;
     setTasksSummary((s) => ({ ...s, loading: true, error: false }));
-    run("tasks", tasksText);
-  }, [tasks, tasksSummary.text, run]);
+    setGlobalLoading(true);
+
+    try {
+      const formattedTasks = tasksVal
+        ? tasksVal.map((t) => `- ${t.name} (id:${t.gid}, ${t.completed ? "Completed" : "Pending"})`).join("\n")
+        : "";
+
+      const res = await generateUnifiedSummary({
+        emailContent: cleanEmailText(emailVal),
+        chatContent: chatVal || "",
+        tasksContent: formattedTasks,
+      });
+
+      const emailResult = res.emailSummary || "";
+      const chatResult = res.chatSummary || "";
+      const tasksResult = res.tasksSummary || "";
+      const globalResult = res.globalDigest || "";
+
+      setEmail((s) => ({ ...s, text: emailResult || null, loading: false }));
+      setChat((s) => ({ ...s, text: chatResult || null, loading: false }));
+      setTasksSummary((s) => ({ ...s, text: tasksResult || null, loading: false }));
+      setGlobalText(globalResult || null);
+      setChatRefs(res.chatRefs ?? []);
+      setGlobalRefs(res.globalRefs ?? []);
+      setEmailRefs(res.emailRefs ?? []);
+      setTaskRefs(res.taskRefs ?? []);
+
+      // Save to localStorage
+      const fp = getFingerprint(emailVal, chatVal, tasksVal);
+      try {
+        localStorage.setItem(
+          "speehive_summary_cache",
+          JSON.stringify({
+            fingerprint: fp,
+            data: {
+              emailSummary: emailResult,
+              chatSummary: chatResult,
+              tasksSummary: tasksResult,
+              globalDigest: globalResult,
+            },
+          })
+        );
+      } catch {
+        // ignore storage quota errors
+      }
+    } catch (err) {
+      console.error("Failed to generate unified summary:", err);
+      setEmail((s) => ({ ...s, loading: false, error: true }));
+      setChat((s) => ({ ...s, loading: false, error: true }));
+      setTasksSummary((s) => ({ ...s, loading: false, error: true }));
+    } finally {
+      setGlobalLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    if (!hasGlobalInputs) return;
+    // Wait for all connected services to finish loading their data
+    const isWaitingForMs365 = ms365Status === "connected" && (emailText === null || chatText === null);
+    const isWaitingForAsana = asanaStatus === "connected" && tasks === null;
+    const isWaitingForFeeds = ms365Status === "loading" || asanaStatus === "loading" || isWaitingForMs365 || isWaitingForAsana;
 
-    // Wait for active feeds to finish their individual summaries before generating the global briefing
-    const emailLoading = emailText && emailText.length > MIN_CONTENT_LENGTH && !email.text && !email.error;
-    const chatLoading = chatText && chatText.length > MIN_CONTENT_LENGTH && !chat.text && !chat.error;
-    const tasksLoading = tasks && tasks.length > 0 && !tasksSummary.text && !tasksSummary.error;
-    if (emailLoading || chatLoading || tasksLoading) {
+    if (isWaitingForFeeds) {
       return;
     }
 
-    const fingerprint = `${email.text ?? ""}|${chat.text ?? ""}|${tasksSummary.text ?? ""}`;
-    if (fingerprint === globalFingerprintRef.current) return;
-    globalFingerprintRef.current = fingerprint;
-
-    const parts: string[] = [];
-    if (email.text) parts.push(`[MAIL] ${email.text}`);
-    if (chat.text) parts.push(`[TEAMS] ${chat.text}`);
-    if (tasksSummary.text) parts.push(`[ASANA] ${tasksSummary.text}`);
-    
-    if (parts.length === 0) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setGlobalLoading(false);
+    const hasEmail = emailText && emailText.length > MIN_CONTENT_LENGTH;
+    const hasChat = chatText && chatText.length > MIN_CONTENT_LENGTH;
+    const hasTasks = tasks && tasks.length > 0;
+    if (!hasEmail && !hasChat && !hasTasks) {
       return;
     }
 
-    setGlobalLoading(true);
-    const timer = setTimeout(() => run("global", parts.join("\n\n")), GLOBAL_DEBOUNCE_MS);
+    const fp = getFingerprint(emailText, chatText, tasks);
+
+    // Try restoring from cache
+    try {
+      const cached = localStorage.getItem("speehive_summary_cache");
+      if (cached) {
+        const { fingerprint: cachedFp, data } = JSON.parse(cached);
+        if (cachedFp === fp) {
+          setTimeout(() => {
+            setEmail((s) => ({ ...s, text: data.emailSummary || null, loading: false, error: false }));
+            setChat((s) => ({ ...s, text: data.chatSummary || null, loading: false, error: false }));
+            setTasksSummary((s) => ({ ...s, text: data.tasksSummary || null, loading: false, error: false }));
+            setGlobalText(data.globalDigest || null);
+            setGlobalLoading(false);
+          }, 0);
+          return;
+        }
+      }
+    } catch {
+      console.warn("Failed to parse summary cache from localStorage");
+    }
+
+    // Debounce API calls by 1 second
+    const timer = setTimeout(() => {
+      fetchUnifiedSummary(emailText, chatText, tasks);
+    }, 1000);
+
     return () => clearTimeout(timer);
-  }, [
-    email.text,
-    chat.text,
-    tasksSummary.text,
-    email.error,
-    chat.error,
-    tasksSummary.error,
-    hasGlobalInputs,
-    emailText,
-    chatText,
-    tasks,
-    run
-  ]);
-
-  const retryEmail = useCallback(() => {
-    if (emailText && emailText.length > MIN_CONTENT_LENGTH) {
-      emailFingerprintRef.current = "";
-      setEmail((s) => ({ ...s, loading: true, error: false }));
-      run("email", emailText);
-    }
-  }, [emailText, run]);
-
-  const retryChat = useCallback(() => {
-    if (chatText && chatText.length > MIN_CONTENT_LENGTH) {
-      chatFingerprintRef.current = "";
-      setChat((s) => ({ ...s, loading: true, error: false }));
-      run("chat", chatText);
-    }
-  }, [chatText, run]);
-
-  const retryTasks = useCallback(() => {
-    if (tasks && tasks.length > 0) {
-      const tasksText = tasks.map((t) => `- ${t.name} (${t.completed ? "Completed" : "Pending"})`).join("\n");
-      tasksFingerprintRef.current = "";
-      setTasksSummary((s) => ({ ...s, loading: true, error: false }));
-      run("tasks", tasksText);
-    }
-  }, [tasks, run]);
-
-  const refreshGlobal = useCallback(() => {
-    globalFingerprintRef.current = "";
-    const parts: string[] = [];
-    if (email.text) parts.push(`[MAIL] ${email.text}`);
-    if (chat.text) parts.push(`[TEAMS] ${chat.text}`);
-    if (tasksSummary.text) parts.push(`[ASANA] ${tasksSummary.text}`);
-    if (parts.length === 0) return;
-    setGlobalLoading(true);
-    run("global", parts.join("\n\n"));
-  }, [email.text, chat.text, tasksSummary.text, run]);
+  }, [emailText, chatText, tasks, ms365Status, asanaStatus, fetchUnifiedSummary]);
 
   const refreshAll = useCallback(() => {
-    emailFingerprintRef.current = "";
-    chatFingerprintRef.current = "";
-    tasksFingerprintRef.current = "";
-    globalFingerprintRef.current = "";
+    try {
+      localStorage.removeItem("speehive_summary_cache");
+    } catch {}
 
+    setEmail((s) => ({ ...s, text: null, loading: true, error: false }));
+    setChat((s) => ({ ...s, text: null, loading: true, error: false }));
+    setTasksSummary((s) => ({ ...s, text: null, loading: true, error: false }));
     setGlobalText(null);
     setGlobalLoading(true);
 
-    setEmail({ text: null, loading: true, error: false, collapsed: email.collapsed });
-    setChat({ text: null, loading: true, error: false, collapsed: chat.collapsed });
-    setTasksSummary({ text: null, loading: true, error: false, collapsed: tasksSummary.collapsed });
-  }, [email.collapsed, chat.collapsed, tasksSummary.collapsed]);
+    fetchUnifiedSummary(emailText, chatText, tasks);
+  }, [emailText, chatText, tasks, fetchUnifiedSummary]);
 
   return {
     email,
     chat,
     tasksSummary,
     global: { text: globalText, loading: globalLoading, collapsed: globalCollapsed },
+    chatRefs,
+    globalRefs,
+    emailRefs,
+    taskRefs,
     setEmailCollapsed: (v: boolean) => setEmail((s) => ({ ...s, collapsed: v })),
     setChatCollapsed: (v: boolean) => setChat((s) => ({ ...s, collapsed: v })),
     setTasksCollapsed: (v: boolean) => setTasksSummary((s) => ({ ...s, collapsed: v })),
     setGlobalCollapsed: (v: boolean) => setGlobalCollapsed(v),
-    retryEmail,
-    retryChat,
-    retryTasks,
-    refreshGlobal,
+    retryEmail: refreshAll,
+    retryChat: refreshAll,
+    retryTasks: refreshAll,
+    refreshGlobal: refreshAll,
     refreshAll,
   };
 }

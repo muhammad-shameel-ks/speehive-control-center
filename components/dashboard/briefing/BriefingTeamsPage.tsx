@@ -1,37 +1,78 @@
-"use client";
-
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { BriefingDigestStrip } from "@/components/dashboard/briefing/BriefingDigestStrip";
 import { InitialAvatar } from "@/components/dashboard/panels/InitialAvatar";
 import { EmptyState } from "@/components/dashboard/panels/EmptyState";
 import { SparklesIcon } from "@/components/icons";
 import type { ParsedChat } from "@/lib/types/briefing";
+import type { DigestRef } from "@/lib/integrations/api-client";
 
 export function BriefingTeamsPage({
   parsedChats,
   initialChat,
+  initialChatMessageIndex,
   summary,
   loading,
   error,
   onRetry,
   onReplyChat,
+  chatRefs,
+  globalRefs,
 }: {
   parsedChats: ParsedChat[];
   initialChat: ParsedChat | null;
+  initialChatMessageIndex?: number | null;
   summary: string | null;
   loading: boolean;
   error: boolean;
   onRetry: () => void;
   onReplyChat: (chat: ParsedChat) => void;
+  chatRefs?: DigestRef[];
+  globalRefs?: (DigestRef | null)[];
 }) {
   const [selected, setSelected] = useState<ParsedChat | null>(initialChat ?? parsedChats[0] ?? null);
+  const [highlightedIndex, setHighlightedIndex] = useState<number | null>(initialChatMessageIndex ?? null);
+  const [highlightActive, setHighlightActive] = useState(!!initialChatMessageIndex);
+  const [highlightKey, setHighlightKey] = useState(0);
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (initialChat) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelected(initialChat);
+      if (initialChatMessageIndex !== undefined && initialChatMessageIndex !== null) {
+        const max = (initialChat.messages?.length ?? 1) - 1;
+        setHighlightedIndex(Math.min(Math.max(0, initialChatMessageIndex), max));
+        setHighlightActive(true);
+        setHighlightKey((prev) => prev + 1);
+      } else {
+        setHighlightedIndex(null);
+        setHighlightActive(false);
+      }
     }
-  }, [initialChat]);
+  }, [initialChat, initialChatMessageIndex]);
+
+  useEffect(() => {
+    if (!highlightActive) return;
+    const t = setTimeout(() => setHighlightActive(false), 3000);
+    return () => clearTimeout(t);
+  }, [highlightKey, highlightActive]);
+
+  useEffect(() => {
+    if (highlightedIndex !== null && selected) {
+      const timer = setTimeout(() => {
+        requestAnimationFrame(() => {
+          const element = scrollContainerRef.current?.querySelector(
+            `[data-message-index="${highlightedIndex}"]`
+          );
+          if (element) {
+            element.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+        });
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [highlightedIndex, selected, highlightKey]);
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
@@ -43,7 +84,19 @@ export function BriefingTeamsPage({
         color="#3CBFAC"
         source="TEAMS"
         parsedChats={parsedChats}
-        onOpenChat={setSelected}
+        chatRefs={chatRefs}
+        globalRefs={globalRefs}
+        onOpenChat={(chat, msgIndex) => {
+          setSelected(chat);
+          if (msgIndex !== undefined) {
+            setHighlightedIndex(msgIndex);
+            setHighlightActive(true);
+            setHighlightKey((prev) => prev + 1);
+          } else {
+            setHighlightedIndex(null);
+            setHighlightActive(false);
+          }
+        }}
       />
 
       <div className="flex flex-1 overflow-hidden">
@@ -55,7 +108,11 @@ export function BriefingTeamsPage({
               {parsedChats.map((chat) => (
                 <button
                   key={chat.id}
-                  onClick={() => setSelected(chat)}
+                  onClick={() => {
+                    setSelected(chat);
+                    setHighlightedIndex(null);
+                    setHighlightActive(false);
+                  }}
                   className={`w-full flex items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/40 ${
                     selected?.id === chat.id ? "bg-muted/60" : ""
                   }`}
@@ -89,12 +146,23 @@ export function BriefingTeamsPage({
                 <h3 className="text-[16px] font-bold text-foreground">{selected.title}</h3>
               </div>
 
-              <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2">
+              <div
+                ref={scrollContainerRef}
+                className="flex-1 overflow-y-auto px-4 py-4 space-y-2"
+              >
                 {selected.messages && selected.messages.length > 0 ? (
                   selected.messages.map((msg, i) => (
                     <div
-                      key={i}
-                      className={`flex items-end gap-2 ${msg.isSent ? "flex-row-reverse" : "flex-row"}`}
+                      key={`${msg.id}-${highlightedIndex === i && highlightActive ? highlightKey : "normal"}`}
+                      data-message-id={msg.id}
+                      data-message-index={i}
+                      className={`flex items-end gap-2 p-1.5 rounded-xl transition-all ${
+                        msg.isSent ? "flex-row-reverse" : "flex-row"
+                      } ${
+                        highlightedIndex === i && highlightActive
+                          ? "animate-highlight-flash"
+                          : ""
+                      }`}
                     >
                       {!msg.isSent && (
                         <InitialAvatar name={msg.sender} rounded="md" className="shrink-0 mb-0.5" />

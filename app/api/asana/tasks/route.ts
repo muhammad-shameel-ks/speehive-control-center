@@ -1,78 +1,118 @@
 import { NextResponse } from "next/server";
 import { getAsanaServerConfig } from "@/lib/asana-server-config";
-import { callAsanaTool, refreshAccessToken } from "@/lib/asana-mcp";
+import {
+  getMyTasks,
+  createTask,
+  updateTask,
+  getWorkspaces,
+  refreshAccessToken,
+} from "@/lib/asana-api";
 import { getSession, updateSession } from "@/lib/session";
 
 const ALLOWED_ASANA_TOOLS = new Set<string>([
   "get_my_tasks",
   "get_task",
   "get_workspaces",
-  "get_projects",
-  "get_project_tasks",
   "create_task",
   "update_task",
-  "complete_task",
-  "add_project_for_task",
-  "remove_project_for_task",
-  "add_tag_for_task",
-  "remove_tag_for_task",
 ]);
 
-export async function GET() {
+async function getValidToken(): Promise<
+  | { ok: true; accessToken: string }
+  | { ok: false; response: NextResponse }
+> {
   const { data } = await getSession();
+  console.log("[asana:tasks] session check:", {
+    hasAccessToken: !!data.accessToken,
+    hasRefreshToken: !!data.refreshToken,
+    expiresAt: data.expiresAt,
+    now: Date.now(),
+    workspaceGid: data.workspaceGid,
+  });
 
   if (!data.accessToken || !data.refreshToken) {
-    return NextResponse.json({ state: "unauthorized" as const });
+    return {
+      ok: false,
+      response: NextResponse.json({ state: "unauthorized" as const }),
+    };
   }
 
   const REFRESH_WINDOW_MS = 60_000;
   const needsRefresh =
     !data.expiresAt || data.expiresAt - Date.now() < REFRESH_WINDOW_MS;
 
-  let accessToken = data.accessToken;
-
   if (needsRefresh) {
     const config = await getAsanaServerConfig();
     if (!config) {
-      return NextResponse.json({
-        state: "unauthorized" as const,
-        error: "Asana credentials not configured.",
-      });
+      return {
+        ok: false,
+        response: NextResponse.json({
+          state: "unauthorized" as const,
+          error: "Asana credentials not configured.",
+        }),
+      };
     }
     try {
       const refreshed = await refreshAccessToken(data.refreshToken, config);
-      accessToken = refreshed.accessToken;
       await updateSession({
         accessToken: refreshed.accessToken,
         refreshToken: refreshed.refreshToken,
         expiresAt: refreshed.expiresAt,
       });
+      return { ok: true, accessToken: refreshed.accessToken };
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
-      return NextResponse.json({
-        state: "unauthorized" as const,
-        error: `Token refresh failed: ${message}`,
-      });
+      return {
+        ok: false,
+        response: NextResponse.json({
+          state: "unauthorized" as const,
+          error: `Token refresh failed: ${message}`,
+        }),
+      };
     }
   }
 
+  return { ok: true, accessToken: data.accessToken };
+}
+
+export async function GET() {
+  console.log("[asana:tasks] GET — fetching tasks");
+  const auth = await getValidToken();
+  if (!auth.ok) {
+    console.log("[asana:tasks] GET — auth failed, returning:", auth.response.status);
+    return auth.response;
+  }
+  console.log("[asana:tasks] GET — auth ok, fetching workspaces/tasks");
+
   try {
-    const result = await callAsanaTool(accessToken, "get_my_tasks");
-    return NextResponse.json({ state: "connected" as const, result });
+    const { data: session } = await getSession();
+    let workspaceGid = session.workspaceGid;
+
+    if (!workspaceGid) {
+      const workspaces = await getWorkspaces(auth.accessToken);
+      workspaceGid = workspaces[0]?.gid;
+      if (!workspaceGid) {
+        return NextResponse.json({
+          state: "unauthorized" as const,
+          error: "No Asana workspaces found.",
+        });
+      }
+      await updateSession({ workspaceGid });
+    }
+
+    const tasks = await getMyTasks(auth.accessToken, workspaceGid);
+    console.log(`[asana:tasks] GET — returning ${tasks.length} tasks`);
+    return NextResponse.json({ state: "connected" as const, result: tasks });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
+    console.error("[asana:tasks] GET — error:", message);
     return NextResponse.json({ state: "error" as const, error: message });
   }
 }
 
 export async function POST(req: Request) {
-  const { data } = await getSession();
-
-  if (!data.accessToken || !data.refreshToken) {
-    return NextResponse.json({ state: "unauthorized" as const }, { status: 401 });
-  }
-
   const { toolName, arguments: toolArgs } = await req.json();
+  console.log(`[asana:tasks] POST — tool: ${toolName}`);
 
   if (!toolName) {
     return NextResponse.json({ error: "Missing toolName" }, { status: 400 });
@@ -85,42 +125,62 @@ export async function POST(req: Request) {
     );
   }
 
-  const REFRESH_WINDOW_MS = 60_000;
-  const needsRefresh =
-    !data.expiresAt || data.expiresAt - Date.now() < REFRESH_WINDOW_MS;
-
-  let accessToken = data.accessToken;
-
-  if (needsRefresh) {
-    const config = await getAsanaServerConfig();
-    if (!config) {
-      return NextResponse.json({
-        state: "unauthorized" as const,
-        error: "Asana credentials not configured.",
-      }, { status: 401 });
-    }
-    try {
-      const refreshed = await refreshAccessToken(data.refreshToken, config);
-      accessToken = refreshed.accessToken;
-      await updateSession({
-        accessToken: refreshed.accessToken,
-        refreshToken: refreshed.refreshToken,
-        expiresAt: refreshed.expiresAt,
-      });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Unknown error";
-      return NextResponse.json({
-        state: "unauthorized" as const,
-        error: `Token refresh failed: ${message}`,
-      }, { status: 401 });
-    }
-  }
+  const auth = await getValidToken();
+  if (!auth.ok) return auth.response;
 
   try {
-    const result = await callAsanaTool(accessToken, toolName, toolArgs);
+    let result: unknown;
+
+    switch (toolName) {
+      case "get_workspaces":
+        result = await getWorkspaces(auth.accessToken);
+        break;
+      case "get_my_tasks": {
+        const { data: session } = await getSession();
+        let workspaceGid = session.workspaceGid;
+        if (!workspaceGid) {
+          const workspaces = await getWorkspaces(auth.accessToken);
+          workspaceGid = workspaces[0]?.gid;
+          if (workspaceGid) await updateSession({ workspaceGid });
+        }
+        if (!workspaceGid) {
+          return NextResponse.json({
+            state: "unauthorized" as const,
+            error: "No Asana workspaces found.",
+          });
+        }
+        result = await getMyTasks(auth.accessToken, workspaceGid);
+        break;
+      }
+      case "create_task":
+        result = await createTask(auth.accessToken, {
+          name: (toolArgs?.name as string) ?? "Untitled Task",
+          workspace: (toolArgs?.workspace as string) ?? "",
+          notes: toolArgs?.notes as string | undefined,
+          due_on: toolArgs?.due_on as string | undefined,
+        });
+        break;
+      case "update_task":
+        result = await updateTask(
+          auth.accessToken,
+          (toolArgs?.task_gid as string) ?? "",
+          { completed: toolArgs?.completed as boolean | undefined },
+        );
+        break;
+      default:
+        return NextResponse.json(
+          { error: `Unhandled tool: ${toolName}` },
+          { status: 400 },
+        );
+    }
+
     return NextResponse.json({ state: "connected" as const, result });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
-    return NextResponse.json({ state: "error" as const, error: message }, { status: 500 });
+    console.error(`[asana:tasks] POST — ${toolName} error:`, message);
+    return NextResponse.json(
+      { state: "error" as const, error: message },
+      { status: 500 },
+    );
   }
 }

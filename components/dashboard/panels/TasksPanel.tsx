@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/dashboard/panels/EmptyState";
 import { LoadingSpinner } from "@/components/dashboard/panels/LoadingSpinner";
 import { TaskRow } from "@/components/dashboard/panels/TaskRow";
 import type { AsanaTask } from "@/lib/types/integrations";
+import type { BriefingTab } from "@/lib/types/briefing";
 import { partitionByCompleted } from "@/lib/utils/array";
 import { ClickableDigest } from "@/components/dashboard/panels/ClickableDigest";
 
@@ -28,6 +29,7 @@ export function TasksPanel({
   onInlineInputChange,
   onInlineAddTask,
   onOpenTask,
+  onOpenTab,
 }: {
   asanaStatus: "loading" | "connected" | "disconnected" | "unconfigured" | "unauthorized";
   tasks: AsanaTask[] | null;
@@ -40,6 +42,7 @@ export function TasksPanel({
   onInlineInputChange: (value: string) => void;
   onInlineAddTask: (e: React.FormEvent) => void;
   onOpenTask?: (task: AsanaTask) => void;
+  onOpenTab: (tab: BriefingTab) => void;
 }) {
   const { pending, done } = partitionByCompleted(tasks);
 
@@ -107,8 +110,7 @@ export function TasksPanel({
               <ClickableDigest
                 text={tasksSummary.text ?? ""}
                 source="ASANA"
-                asanaTasks={tasks}
-                onOpenTask={onOpenTask}
+                onOpenTab={onOpenTab}
               />
             </div>
           )}
