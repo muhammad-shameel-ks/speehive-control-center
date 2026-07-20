@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { headers } from "next/headers";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -18,11 +19,13 @@ export const metadata: Metadata = {
   description: "Unified workspace dashboard for IT management",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
+
   return (
     <html
       lang="en"
@@ -32,6 +35,7 @@ export default function RootLayout({
       <head>
         <script
           id="theme-script"
+          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem('theme');if(t){var m=t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':t==='system'?'light':t;document.documentElement.classList.add(m)}else{document.documentElement.classList.add('dark')}}catch(e){document.documentElement.classList.add('dark')}})();`,
           }}

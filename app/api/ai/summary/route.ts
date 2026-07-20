@@ -295,8 +295,10 @@ Example output:
     if (!trimmed) console.warn(`[ai/summary] model returned empty text for type=${type}`);
     return NextResponse.json({ summary: trimmed });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    console.error(`[ai/summary] ERROR:`, message);
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error(`[ai/summary] ERROR:`, err);
+    return NextResponse.json(
+      { error: "An internal error occurred. Please try again." },
+      { status: 500 },
+    );
   }
 }

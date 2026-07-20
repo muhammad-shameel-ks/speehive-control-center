@@ -66,9 +66,9 @@ export async function GET(request: Request) {
 
     return NextResponse.redirect(new URL("/?ms365=connected", url.origin));
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
+    console.error("[ms365] callback error:", err);
     return NextResponse.redirect(
-      new URL(`/?ms365_error=${encodeURIComponent(message)}`, url.origin),
+      new URL("/?ms365_error=Connection+failed.+Please+try+again.", url.origin),
     );
   }
 }

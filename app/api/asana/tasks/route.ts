@@ -61,12 +61,12 @@ async function getValidToken(): Promise<
       });
       return { ok: true, accessToken: refreshed.accessToken };
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Unknown error";
+      console.error("[asana:tasks] token refresh failed:", err);
       return {
         ok: false,
         response: NextResponse.json({
           state: "unauthorized" as const,
-          error: `Token refresh failed: ${message}`,
+          error: "Token refresh failed. Please reconnect Asana.",
         }),
       };
     }
@@ -104,9 +104,11 @@ export async function GET() {
     console.log(`[asana:tasks] GET — returning ${tasks.length} tasks`);
     return NextResponse.json({ state: "connected" as const, result: tasks });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    console.error("[asana:tasks] GET — error:", message);
-    return NextResponse.json({ state: "error" as const, error: message });
+    console.error("[asana:tasks] GET — error:", err);
+    return NextResponse.json({
+      state: "error" as const,
+      error: "Failed to fetch tasks. Please try again.",
+    });
   }
 }
 
@@ -176,10 +178,12 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ state: "connected" as const, result });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    console.error(`[asana:tasks] POST — ${toolName} error:`, message);
+    console.error(`[asana:tasks] POST — ${toolName} error:`, err);
     return NextResponse.json(
-      { state: "error" as const, error: message },
+      {
+        state: "error" as const,
+        error: "An error occurred while processing your request.",
+      },
       { status: 500 },
     );
   }

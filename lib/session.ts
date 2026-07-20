@@ -9,8 +9,6 @@ export type Ms365User = {
 
 export type SessionData = {
   // Asana
-  clientId?: string;
-  clientSecret?: string;
   accessToken?: string;
   refreshToken?: string;
   expiresAt?: number;
@@ -30,8 +28,6 @@ type DbRow = Record<string, unknown>;
 
 function rowToSession(row: DbRow): SessionData {
   return {
-    clientId: (row.asana_client_id as string) ?? undefined,
-    clientSecret: (row.asana_client_secret as string) ?? undefined,
     accessToken: (row.asana_access_token as string) ?? undefined,
     refreshToken: (row.asana_refresh_token as string) ?? undefined,
     expiresAt: (row.asana_expires_at as number) ?? undefined,
@@ -49,8 +45,6 @@ function rowToSession(row: DbRow): SessionData {
 
 function patchToRow(patch: Partial<SessionData>): DbRow {
   const row: DbRow = {};
-  if ("clientId" in patch) row.asana_client_id = patch.clientId ?? null;
-  if ("clientSecret" in patch) row.asana_client_secret = patch.clientSecret ?? null;
   if ("accessToken" in patch) row.asana_access_token = patch.accessToken ?? null;
   if ("refreshToken" in patch) row.asana_refresh_token = patch.refreshToken ?? null;
   if ("expiresAt" in patch) row.asana_expires_at = patch.expiresAt ?? null;

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAsanaServerConfig } from "@/lib/asana-server-config";
 import { makePkcePair, randomState } from "@/lib/oauth/pkce";
-import { getSession, updateSession } from "@/lib/session";
+import { updateSession } from "@/lib/session";
 
 const ASANA_AUTH_URL = "https://app.asana.com/-/oauth_authorize";
 
