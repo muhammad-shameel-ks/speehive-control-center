@@ -129,9 +129,7 @@ function formatChatsAsText(data: unknown, currentUser?: Ms365User): string {
         const text = m.body?.contentType === "html"
           ? rawContent.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim()
           : rawContent.replace(/\s+/g, " ").trim();
-        const time = m.createdDateTime
-          ? new Date(m.createdDateTime).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
-          : "";
+        const time = m.createdDateTime ?? "";
         const tag = isMe ? "SENT" : "RECV";
         // Use pipe separator to avoid colons-in-time breaking the parser
         return `BUBBLE|${tag}|${senderName}|${time}|${text}`;

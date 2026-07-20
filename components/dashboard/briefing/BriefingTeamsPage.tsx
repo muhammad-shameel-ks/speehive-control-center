@@ -4,6 +4,7 @@ import { InitialAvatar } from "@/components/dashboard/panels/InitialAvatar";
 import { EmptyState } from "@/components/dashboard/panels/EmptyState";
 import { SparklesIcon } from "@/components/icons";
 import type { ParsedChat } from "@/lib/types/briefing";
+import { formatChatTime } from "@/lib/parser";
 import type { DigestRef } from "@/lib/integrations/api-client";
 
 export function BriefingTeamsPage({
@@ -187,7 +188,7 @@ export function BriefingTeamsPage({
                           {msg.text}
                         </div>
                         {msg.time && (
-                          <span className="text-[10px] text-muted-foreground px-1">{msg.time}</span>
+                          <span className="text-[10px] text-muted-foreground px-1">{formatChatTime(msg.time)}</span>
                         )}
                       </div>
                     </div>

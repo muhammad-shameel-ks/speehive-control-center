@@ -29,6 +29,17 @@ export interface ChatMessage {
   isSent: boolean;
 }
 
+export function formatChatTime(isoString: string): string {
+  if (!isoString) return "";
+  try {
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) return isoString;
+    return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  } catch {
+    return isoString;
+  }
+}
+
 export interface ParsedChat {
   id: string;
   title: string;
