@@ -200,10 +200,10 @@ export async function GET(req: NextRequest, ctx: Ctx) {
         ms365ExpiresAt: refreshed.expiresAt,
       });
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Unknown error";
+      console.error("[ms365] token refresh failed:", err);
       return NextResponse.json({
         state: "unauthorized",
-        error: `Token refresh failed: ${message}`,
+        error: "Token refresh failed. Please reconnect Microsoft 365.",
       });
     }
   }
@@ -235,7 +235,10 @@ export async function GET(req: NextRequest, ctx: Ctx) {
       messageCount,
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return NextResponse.json({ state: "error", error: message });
+    console.error("[ms365] fetch error:", err);
+    return NextResponse.json({
+      state: "error",
+      error: "Failed to fetch data. Please try again.",
+    });
   }
 }

@@ -55,9 +55,9 @@ export async function GET(request: Request) {
     });
     return NextResponse.redirect(new URL("/?asana=connected", url.origin));
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
+    console.error("[asana] callback error:", err);
     return NextResponse.redirect(
-      new URL(`/?asana_error=${encodeURIComponent(message)}`, url.origin),
+      new URL("/?asana_error=Connection+failed.+Please+try+again.", url.origin),
     );
   }
 }
