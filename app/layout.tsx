@@ -36,6 +36,7 @@ export default async function RootLayout({
         <script
           id="theme-script"
           nonce={nonce}
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem('theme');if(t){var m=t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':t==='system'?'light':t;document.documentElement.classList.add(m)}else{document.documentElement.classList.add('dark')}}catch(e){document.documentElement.classList.add('dark')}})();`,
           }}
