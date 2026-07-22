@@ -8,6 +8,7 @@ import { parseEmails } from "@/lib/parser";
 import type { ParsedEmail, BriefingTab } from "@/lib/types/briefing";
 import type { RefObject } from "react";
 import { ClickableDigest } from "@/components/dashboard/panels/ClickableDigest";
+import { SparklesIcon } from "@/components/icons";
 
 type EmailSummary = {
   text: string | null;
@@ -22,6 +23,7 @@ export function EmailPanel({
   onToggleSummaryCollapsed,
   onOpenEmail,
   onOpenTab,
+  onReplyForEmail,
   text,
   syncing,
   loadingMore,
@@ -35,6 +37,7 @@ export function EmailPanel({
   onToggleSummaryCollapsed: () => void;
   onOpenEmail: (email: ParsedEmail) => void;
   onOpenTab: (tab: BriefingTab) => void;
+  onReplyForEmail?: (email: ParsedEmail) => void;
   text: string | null;
   syncing: boolean;
   loadingMore: boolean;
@@ -133,17 +136,17 @@ export function EmailPanel({
             )}
             <div className="divide-y divide-border">
               {parsedEmails.map((email) => (
-                <button
+                <div
                   key={email.id}
                   onClick={() => onOpenEmail(email)}
-                  className={`w-full group flex items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/40 relative ${
+                  className={`w-full group flex items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/40 relative cursor-pointer ${
                     email.isUnread
                       ? "border-l-[3px] border-l-[var(--panel-email)]"
                       : "border-l-[3px] border-l-transparent"
                   }`}
                 >
                   <InitialAvatar name={email.sender} className="mt-0.5 shrink-0" />
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 pr-12">
                     <div className="flex items-baseline justify-between gap-2 mb-0.5">
                       <span
                         className={`text-[13px] truncate ${
@@ -167,7 +170,21 @@ export function EmailPanel({
                       {email.preview && <span className="text-muted-foreground"> — {email.preview}</span>}
                     </p>
                   </div>
-                </button>
+
+                  {onReplyForEmail && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onReplyForEmail(email);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity absolute right-3 top-3 flex items-center gap-1 px-2 py-1 rounded bg-primary text-primary-foreground text-[10px] font-medium shadow-sm hover:bg-primary/90"
+                      title="Draft reply with AI Assistant"
+                    >
+                      <SparklesIcon className="h-3 w-3" />
+                      <span>Reply AI</span>
+                    </button>
+                  )}
+                </div>
               ))}
             </div>
             <div ref={sentinelRef} className="h-px" />

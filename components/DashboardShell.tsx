@@ -24,6 +24,8 @@ import { useTaskMutations } from "@/hooks/useTaskMutations";
 import { parseEmails, parseChats } from "@/lib/parser";
 import { refreshAllIntegrations } from "@/lib/integrations/refresh-all";
 import { TodosModal } from "@/components/notes/TodosModal";
+import { CommandPalette } from "@/components/dashboard/CommandPalette";
+import { ToastContainer } from "@/components/ui/ToastContainer";
 
 export function DashboardShell({}: { searchParams?: { asana?: string; asana_error?: string; ms365?: string; ms365_error?: string } }) {
   const { theme, setTheme } = useTheme();
@@ -38,6 +40,8 @@ export function DashboardShell({}: { searchParams?: { asana?: string; asana_erro
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isNotesOpen, setIsNotesOpen] = useState(false);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [mobileColumn, setMobileColumn] = useState<"all" | "emails" | "teams" | "tasks">("all");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [chatInitialInput, setChatInitialInput] = useState("");
   const [userEmail, setUserEmail] = useState<string | undefined>();
@@ -46,6 +50,18 @@ export function DashboardShell({}: { searchParams?: { asana?: string; asana_erro
     createClient().auth.getUser().then(({ data }: { data: { user: { email?: string } | null } }) => {
       setUserEmail(data.user?.email ?? undefined);
     });
+  }, []);
+
+  // Global Cmd+K / Ctrl+K listener
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setIsCommandPaletteOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
   const ms365 = useMs365Connection();
@@ -121,6 +137,7 @@ export function DashboardShell({}: { searchParams?: { asana?: string; asana_erro
           resolvedTheme={resolvedTheme}
           onToggleTheme={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
           userEmail={userEmail}
+          onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
         />
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -140,49 +157,76 @@ export function DashboardShell({}: { searchParams?: { asana?: string; asana_erro
                 globalRefs={summaries.globalRefs}
               />
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <EmailPanel
-                  ms365Connected={isConnected}
-                  emailSummary={summaries.email}
-                  onToggleSummaryCollapsed={() => summaries.setEmailCollapsed(!summaries.email.collapsed)}
-                  onOpenEmail={briefing.openForEmail}
-                  onOpenTab={briefing.openBriefing}
-                  text={inbox.text}
-                  syncing={inbox.syncing}
-                  loadingMore={inbox.loadingMore}
-                  hasMore={inbox.hasMore}
-                  refresh={inbox.refresh}
-                  scrollRef={inbox.scrollRef}
-                  sentinelRef={inbox.sentinelRef}
-                />
-                <ChatColumn
-                  ms365Connected={isConnected}
-                  chatSummary={summaries.chat}
-                  chatRefs={summaries.chatRefs}
-                  onToggleSummaryCollapsed={() => summaries.setChatCollapsed(!summaries.chat.collapsed)}
-                  onOpenChat={briefing.openForChat}
-                  text={chats.text}
-                  syncing={chats.syncing}
-                  refresh={chats.refresh}
-                  onOpenNotes={() => setIsNotesOpen(true)}
-                />
-                <TasksPanel
-                  asanaStatus={asana.state.status}
-                  tasks={asana.tasks}
-                  syncing={asana.syncing}
-                  tasksSummary={summaries.tasksSummary}
-                  onToggleSummaryCollapsed={() => summaries.setTasksCollapsed(!summaries.tasksSummary.collapsed)}
-                  onToggleTask={asana.toggleTask}
-                  onSyncAsana={asana.refresh}
-                  inlineInput={mutations.inlineInput}
-                  onInlineInputChange={mutations.setInlineInput}
-                  onInlineAddTask={async (e) => {
-                    e.preventDefault();
-                    await mutations.addInline(mutations.inlineInput);
-                  }}
-                  onOpenTask={briefing.openForTask}
-                  onOpenTab={briefing.openBriefing}
-                />
+              {/* Mobile Viewport Column Switcher */}
+              <div className="flex lg:hidden items-center justify-center p-1 rounded-xl bg-muted/50 border border-border max-w-md mx-auto">
+                {(["all", "emails", "teams", "tasks"] as const).map((col) => (
+                  <button
+                    key={col}
+                    onClick={() => setMobileColumn(col)}
+                    className={`flex-1 py-1.5 text-[12px] font-semibold rounded-lg capitalize transition-all ${
+                      mobileColumn === col
+                        ? "bg-card text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {col}
+                  </button>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+                <div className={mobileColumn === "all" || mobileColumn === "emails" ? "block" : "hidden lg:block"}>
+                  <EmailPanel
+                    ms365Connected={isConnected}
+                    emailSummary={summaries.email}
+                    onToggleSummaryCollapsed={() => summaries.setEmailCollapsed(!summaries.email.collapsed)}
+                    onOpenEmail={briefing.openForEmail}
+                    onOpenTab={briefing.openBriefing}
+                    onReplyForEmail={openReplyForEmail}
+                    text={inbox.text}
+                    syncing={inbox.syncing}
+                    loadingMore={inbox.loadingMore}
+                    hasMore={inbox.hasMore}
+                    refresh={inbox.refresh}
+                    scrollRef={inbox.scrollRef}
+                    sentinelRef={inbox.sentinelRef}
+                  />
+                </div>
+
+                <div className={mobileColumn === "all" || mobileColumn === "teams" ? "block" : "hidden lg:block"}>
+                  <ChatColumn
+                    ms365Connected={isConnected}
+                    chatSummary={summaries.chat}
+                    chatRefs={summaries.chatRefs}
+                    onToggleSummaryCollapsed={() => summaries.setChatCollapsed(!summaries.chat.collapsed)}
+                    onOpenChat={briefing.openForChat}
+                    onReplyForChat={openReplyForChat}
+                    text={chats.text}
+                    syncing={chats.syncing}
+                    refresh={chats.refresh}
+                    onOpenNotes={() => setIsNotesOpen(true)}
+                  />
+                </div>
+
+                <div className={mobileColumn === "all" || mobileColumn === "tasks" ? "block" : "hidden lg:block"}>
+                  <TasksPanel
+                    asanaStatus={asana.state.status}
+                    tasks={asana.tasks}
+                    syncing={asana.syncing}
+                    tasksSummary={summaries.tasksSummary}
+                    onToggleSummaryCollapsed={() => summaries.setTasksCollapsed(!summaries.tasksSummary.collapsed)}
+                    onToggleTask={asana.toggleTask}
+                    onSyncAsana={asana.refresh}
+                    inlineInput={mutations.inlineInput}
+                    onInlineInputChange={mutations.setInlineInput}
+                    onInlineAddTask={async (e) => {
+                      e.preventDefault();
+                      await mutations.addInline(mutations.inlineInput);
+                    }}
+                    onOpenTask={briefing.openForTask}
+                    onOpenTab={briefing.openBriefing}
+                  />
+                </div>
               </div>
             </>
           )}
@@ -216,6 +260,7 @@ export function DashboardShell({}: { searchParams?: { asana?: string; asana_erro
         <button
           onClick={() => setIsChatOpen(true)}
           className="fixed bottom-5 right-5 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:scale-105 active:scale-95 transition-transform"
+          title="Open AI Copilot Chat (⌘C)"
         >
           <SparklesIcon className="h-5 w-5" />
           <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-400 border-2 border-background" />
@@ -296,6 +341,20 @@ export function DashboardShell({}: { searchParams?: { asana?: string; asana_erro
         open={isNotesOpen}
         onClose={() => setIsNotesOpen(false)}
       />
+
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        onOpenChat={() => setIsChatOpen(true)}
+        onRefreshAll={handleRefresh}
+        onOpenCreateTask={() => mutations.openCreate()}
+        onOpenNotes={() => setIsNotesOpen(true)}
+        onTabChange={setActiveTab}
+        resolvedTheme={resolvedTheme}
+        onToggleTheme={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+      />
+
+      <ToastContainer />
     </div>
   );
 }
