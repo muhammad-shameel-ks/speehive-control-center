@@ -4,4 +4,5 @@ services:
     build: .
     ports:
       - "3010:3010"
+    env_file: .env.local
     restart: unless-stopped
