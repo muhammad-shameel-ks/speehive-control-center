@@ -36,7 +36,8 @@ export async function GET(request: Request) {
     );
   }
 
-  const redirectUri = `${url.origin}/api/ms365/callback`;
+  const origin = process.env.NEXT_PUBLIC_BASE_URL || url.origin;
+  const redirectUri = `${origin}/api/ms365/callback`;
 
   try {
     const tokens = await exchangeCodeForTokens(
