@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useChatHistory } from "@/hooks/useChatHistory";
+import { CheckIcon, CopyIcon } from "@/components/icons";
 
 const emptySubscribe = () => () => {};
 function useIsMounted() {
@@ -25,6 +26,17 @@ function compactJson(value: unknown): string {
   } catch {
     return String(value);
   }
+}
+
+function getCleanCopyText(textContent: string): string {
+  if (!textContent) return "";
+  const codeBlockMatch = textContent.match(/```(?:[a-z]*\n)?([\s\S]*?)```/i);
+  if (codeBlockMatch && codeBlockMatch[1]?.trim()) {
+    return codeBlockMatch[1].trim();
+  }
+  return textContent
+    .replace(/---\s*\n\*\*(?:Before sending|Note|Tip):\*\*[\s\S]*/gi, "")
+    .trim();
 }
 
 const markdownComponents: Components = {
@@ -162,6 +174,42 @@ function ToolCallCard({ part, theme = "dark" }: { part: DynamicToolUIPart; theme
 function MessageBubble({ message, theme = "dark" }: { message: UIMessage; theme?: "dark" | "light" }) {
   const isUser = message.role === "user";
   const isDark = theme === "dark";
+  const [copied, setCopied] = useState(false);
+
+  const textContent = message.parts
+    .filter((part): part is { type: "text"; text: string } => part.type === "text")
+    .map((part) => part.text)
+    .join("\n\n");
+
+  const handleCopy = useCallback(() => {
+    const textToCopy = getCleanCopyText(textContent);
+    if (!textToCopy) return;
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }).catch(() => {
+        const textarea = document.createElement("textarea");
+        textarea.value = textToCopy;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
+    } else {
+      const textarea = document.createElement("textarea");
+      textarea.value = textToCopy;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  }, [textContent]);
+
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
       {!isUser && (
@@ -192,6 +240,40 @@ function MessageBubble({ message, theme = "dark" }: { message: UIMessage; theme?
           }
           return null;
         })}
+        {Boolean(textContent) && (
+          <div className={`mt-2 flex items-center justify-end border-t pt-2 ${
+            isUser 
+              ? "border-indigo-500/40" 
+              : isDark 
+                ? "border-zinc-800/80" 
+                : "border-zinc-100"
+          }`}>
+            <button
+              type="button"
+              onClick={handleCopy}
+              className={`flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium transition-colors ${
+                isUser
+                  ? "text-indigo-100 hover:bg-indigo-700/60 hover:text-white"
+                  : isDark
+                    ? "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+                    : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700"
+              }`}
+              title="Copy to clipboard"
+            >
+              {copied ? (
+                <>
+                  <CheckIcon className={`h-3.5 w-3.5 ${isUser ? "text-emerald-300" : "text-emerald-400"}`} />
+                  <span className={isUser ? "text-emerald-300" : "text-emerald-400"}>Copied!</span>
+                </>
+              ) : (
+                <>
+                  <CopyIcon className="h-3.5 w-3.5" />
+                  <span>Copy to clipboard</span>
+                </>
+              )}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

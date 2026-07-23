@@ -76,11 +76,11 @@ export function useTaskMutations(opts: {
   );
 
   const draftReplyForEmail = useCallback((email: ParsedEmail): string => {
-    return `Please draft a professional reply to this email from ${email.sender} with subject "${email.subject}":\n\n"${email.preview}"`;
+    return `Draft a professional reply to this email from ${email.sender} with subject "${email.subject}":\n\n"${email.preview}"\n\nProvide ONLY the clean draft reply content to be sent, without any commentary, disclaimers, or 'Before sending' notes.`;
   }, []);
 
   const draftReplyForChat = useCallback((chat: ParsedChat): string => {
-    return `Please help me draft a response to ${chat.sender} from our conversation thread:\n\n"${chat.lastMessage}"`;
+    return `Draft a response to ${chat.sender} from our conversation thread:\n\n"${chat.lastMessage}"\n\nProvide ONLY the clean draft reply content to be sent, without any commentary, disclaimers, or 'Before sending' notes.`;
   }, []);
 
   return {

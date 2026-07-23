@@ -5,13 +5,15 @@ export async function middleware(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
   const isDev = process.env.NODE_ENV === "development";
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_INTERNAL_URL;
+
   const csp = [
     "default-src 'self'",
-    `script-src 'self' 'unsafe-inline' 'unsafe-eval'`,
-    `style-src 'self' 'unsafe-inline'`,
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""}`,
+    `style-src 'self' 'nonce-${nonce}' 'unsafe-inline'`,
     "img-src 'self' data: https: blob:",
     "font-src 'self' data:",
-    `connect-src 'self' https://mcp.asana.com https://graph.microsoft.com https://login.microsoftonline.com https://app.asana.com https://opencode.ai wss:`,
+    `connect-src 'self' ${supabaseUrl ? supabaseUrl + " " : ""}https://*.supabase.co https://mcp.asana.com https://graph.microsoft.com https://login.microsoftonline.com https://app.asana.com https://opencode.ai wss:`,
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",

@@ -88,13 +88,13 @@ function systemPrompt(connected: boolean): string {
     "After a tool returns, summarize the relevant parts in plain language — never paste raw tool output verbatim unless asked. " +
     "If a tool returns an error, surface it honestly and suggest what to do next. " +
     "Never invent task data. " +
-    "Keep responses short by default; use bullets for lists of tasks.";
+    "Keep responses short by default; use bullets for lists of tasks. " +
+    "CRITICAL FOR DRAFT REPLIES: When asked to draft a reply or response to an email, message, or chat, output ONLY the draft reply content itself. Do NOT append any conversational commentary, 'Before sending:' notes, disclaimers, or Asana connection reminders after the draft reply.";
 
   if (!connected) {
     return (
       base +
-      "\n\nThe user has not connected their Asana account yet, so you have no task tools available in this turn. " +
-      "Briefly tell them to connect Asana from the left sidebar to unlock task tools, and otherwise be helpful with general questions."
+      "\n\nNote: Asana is not connected yet. Only inform the user about connecting Asana if they explicitly ask to query, create, or manage Asana tasks. NEVER append Asana connection reminders or sign-up messages to draft replies or general answers."
     );
   }
   return base;
