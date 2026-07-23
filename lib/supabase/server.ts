@@ -8,6 +8,9 @@ export async function createClient() {
     (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)!,
     {
+      cookieOptions: {
+        name: "speehive-auth-token",
+      },
       cookies: {
         getAll() {
           return cookieStore.getAll();
