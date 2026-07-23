@@ -11,6 +11,7 @@ import { mimoV25 } from "@/lib/ai-provider";
 import { buildAsanaToolSet } from "@/lib/asana-tools";
 import { rateLimitFromCookie } from "@/lib/rate-limit";
 import { getValidAsanaToken } from "@/lib/session-helpers";
+import { getUserIdentity, type UserIdentity } from "@/lib/session";
 
 export const maxDuration = 60;
 
@@ -38,11 +39,12 @@ export async function POST(req: Request) {
   const { messages }: { messages: UIMessage[] } = await req.json();
 
   const auth = await getValidAsanaToken();
+  const identity = await getUserIdentity();
   const tools = auth.ok ? await buildAsanaToolSet(auth.accessToken) : undefined;
 
   const result = streamText({
     model: mimoV25,
-    system: systemPrompt(auth.ok),
+    system: systemPrompt(auth.ok, identity),
     messages: await convertToModelMessages(messages),
     tools,
     toolChoice: "auto",
@@ -81,7 +83,12 @@ export async function POST(req: Request) {
   });
 }
 
-function systemPrompt(connected: boolean): string {
+function systemPrompt(connected: boolean, identity: UserIdentity): string {
+  const userContext = identity.name || identity.email
+    ? `\n\nUSER IDENTITY:\nThe logged-in user is ${identity.name ?? "the user"}${identity.email ? ` (email: ${identity.email})` : ""}. ` +
+      `When drafting email or chat replies, ALWAYS sign off with their actual name ("${identity.name ?? identity.email?.split("@")[0]}") instead of generic placeholders like '[Your Name]'.`
+    : "";
+
   const base =
     "You are SpeeHive Assistant, a concise and friendly productivity copilot. " +
     "When you need to read or modify Asana data, ALWAYS invoke the appropriate tool using the function-calling API — never write tool calls, XML tags, or pseudo-code as part of your visible reply. " +
@@ -89,7 +96,8 @@ function systemPrompt(connected: boolean): string {
     "If a tool returns an error, surface it honestly and suggest what to do next. " +
     "Never invent task data. " +
     "Keep responses short by default; use bullets for lists of tasks. " +
-    "CRITICAL FOR DRAFT REPLIES: When asked to draft a reply or response to an email, message, or chat, output ONLY the draft reply content itself. Do NOT append any conversational commentary, 'Before sending:' notes, disclaimers, or Asana connection reminders after the draft reply.";
+    "CRITICAL FOR DRAFT REPLIES: When asked to draft a reply or response to an email, message, or chat, output ONLY the draft reply content itself. Do NOT append any conversational commentary, 'Before sending:' notes, disclaimers, or Asana connection reminders after the draft reply." +
+    userContext;
 
   if (!connected) {
     return (

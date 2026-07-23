@@ -118,3 +118,33 @@ export async function clearSession(): Promise<void> {
     })
     .eq("user_id", user.id);
 }
+
+export type UserIdentity = {
+  email?: string;
+  name?: string;
+};
+
+export async function getUserIdentity(): Promise<UserIdentity> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { data: session } = await getSession();
+
+  const email = user?.email ?? session.ms365User?.email;
+  let name =
+    (user?.user_metadata?.full_name as string | undefined) ??
+    (user?.user_metadata?.name as string | undefined) ??
+    session.ms365User?.name;
+
+  if (!name && email) {
+    const prefix = email.split("@")[0];
+    name = prefix
+      .split(/[._-]/)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ");
+  }
+
+  return { email, name };
+}
