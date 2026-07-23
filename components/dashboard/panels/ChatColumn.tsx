@@ -9,6 +9,7 @@ import { parseChats } from "@/lib/parser";
 import type { ParsedChat } from "@/lib/types/briefing";
 import type { DigestRef } from "@/lib/integrations/api-client";
 import { ClickableDigest } from "@/components/dashboard/panels/ClickableDigest";
+import { SparklesIcon } from "@/components/icons";
 
 type ChatSummary = {
   text: string | null;
@@ -23,6 +24,7 @@ export function ChatColumn({
   chatRefs,
   onToggleSummaryCollapsed,
   onOpenChat,
+  onReplyForChat,
   text,
   syncing,
   refresh,
@@ -33,6 +35,7 @@ export function ChatColumn({
   chatRefs?: DigestRef[];
   onToggleSummaryCollapsed: () => void;
   onOpenChat: (chat: ParsedChat) => void;
+  onReplyForChat?: (chat: ParsedChat) => void;
   text: string | null;
   syncing: boolean;
   refresh: () => Promise<unknown>;
@@ -123,13 +126,13 @@ export function ChatColumn({
             <LoadingSpinner />
           ) : parsedChats.length > 0 ? (
             parsedChats.map((chat) => (
-              <button
+              <div
                 key={chat.id}
                 onClick={() => onOpenChat(chat)}
-                className="w-full flex items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/40"
+                className="w-full group flex items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/40 relative cursor-pointer"
               >
                 <InitialAvatar name={chat.title} rounded="md" className="mt-0.5 shrink-0" />
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 pr-12">
                   <div className="flex items-baseline justify-between gap-2 mb-0.5">
                     <span className="text-[13px] font-semibold text-foreground truncate">{chat.title}</span>
                     <span className="text-[11px] text-muted-foreground font-mono shrink-0 tabular-nums">
@@ -141,7 +144,21 @@ export function ChatColumn({
                     {chat.lastMessage}
                   </p>
                 </div>
-              </button>
+
+                {onReplyForChat && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onReplyForChat(chat);
+                    }}
+                    className="opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity absolute right-3 top-3 flex items-center gap-1 px-2 py-1 rounded bg-primary text-primary-foreground text-[10px] font-medium shadow-sm hover:bg-primary/90"
+                    title="Draft reply with AI Assistant"
+                  >
+                    <SparklesIcon className="h-3 w-3" />
+                    <span>Reply AI</span>
+                  </button>
+                )}
+              </div>
             ))
           ) : (
             <EmptyState message="No chats. Click Sync to fetch." />

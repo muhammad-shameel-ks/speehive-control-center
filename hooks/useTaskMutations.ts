@@ -26,6 +26,11 @@ export function useTaskMutations(opts: {
   const [isCreating, setIsCreating] = useState(false);
   const [inlineInput, setInlineInput] = useState("");
 
+  const openCreate = useCallback(() => {
+    setCreateForm(initialFormState());
+    setCreateOpen(true);
+  }, []);
+
   const openFromEmail = useCallback((email: ParsedEmail) => {
     setCreateForm({
       name: `Action: ${email.subject}`,
@@ -85,6 +90,7 @@ export function useTaskMutations(opts: {
     inlineInput,
     setCreateForm,
     setInlineInput,
+    openCreate,
     openFromEmail,
     closeCreate,
     submitCreate,

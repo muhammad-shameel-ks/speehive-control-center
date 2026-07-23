@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useClock } from "@/hooks/useClock";
-import { RefreshIcon, SunIcon, MoonIcon } from "@/components/icons";
+import { RefreshIcon, SunIcon, MoonIcon, SearchIcon } from "@/components/icons";
 import { createClient } from "@/lib/supabase/client";
 import type { DashboardTab } from "@/components/dashboard/Sidebar";
 
@@ -14,6 +14,7 @@ export function Header({
   resolvedTheme,
   onToggleTheme,
   userEmail,
+  onOpenCommandPalette,
 }: {
   activeTab: DashboardTab;
   isRefreshing: boolean;
@@ -22,6 +23,7 @@ export function Header({
   resolvedTheme: "dark" | "light";
   onToggleTheme: () => void;
   userEmail?: string;
+  onOpenCommandPalette?: () => void;
 }) {
   const router = useRouter();
   const currentTime = useClock();
@@ -47,13 +49,27 @@ export function Header({
         )}
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3 sm:gap-4">
+        {onOpenCommandPalette && (
+          <button
+            onClick={onOpenCommandPalette}
+            className="flex items-center gap-2 h-8 px-2.5 rounded-lg border border-border bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground text-[12px] font-medium transition-colors"
+            title="Open Command Palette (⌘K)"
+          >
+            <SearchIcon className="h-3.5 w-3.5" />
+            <span className="hidden md:inline">Command Palette</span>
+            <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded bg-background px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground border border-border">
+              ⌘K
+            </kbd>
+          </button>
+        )}
+
         <button
           onClick={onRefresh}
           disabled={isRefreshing || !canRefresh}
           className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-primary text-primary-foreground text-[12px] font-semibold hover:bg-primary/90 active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm shadow-primary/20"
           aria-label="Refresh all integrations"
-          title="Refresh Gmail, Chat, Calendar, Teams, Outlook and Asana"
+          title="Refresh Outlook Mail, Teams Chat, and Asana Tasks"
         >
           <RefreshIcon className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
           {isRefreshing ? "Refreshing…" : "Refresh All"}
