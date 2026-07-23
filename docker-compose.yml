@@ -1,5 +1,6 @@
 services:
-  app:
+  speehive-control-dashboard:
+    container_name: speehive-control-dashboard
     build: .
     ports:
       - "3010:3010"
