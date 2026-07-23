@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { createClient } from "@/lib/supabase/client";
-import { SpeeHiveMark } from "@/components/icons";
+import { SpeeHiveMark, MicrosoftIcon } from "@/components/icons";
 import { 
   Mail, 
   Lock, 
@@ -100,6 +100,39 @@ export default function LoginPage() {
     }
 
     setLoading(false);
+  }
+
+  async function handleMicrosoftSignIn() {
+    setError("");
+    setMessage("");
+    setLoading(true);
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    if (!supabaseUrl) {
+      setError("Supabase URL is not configured. Check NEXT_PUBLIC_SUPABASE_URL.");
+      setLoading(false);
+      return;
+    }
+
+    const supabase = createClient();
+
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "azure",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          scopes: "openid profile email",
+        },
+      });
+
+      if (error) {
+        setError(error.message);
+        setLoading(false);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Network error — check your connection.");
+      setLoading(false);
+    }
   }
 
   const resolvedTheme = mounted ? theme ?? "dark" : "dark";
@@ -256,6 +289,26 @@ export default function LoginPage() {
             >
               Create Account
             </button>
+          </div>
+
+          {/* Microsoft Entra ID OAuth Sign-In */}
+          <div className="space-y-4">
+            <button
+              type="button"
+              onClick={handleMicrosoftSignIn}
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl border border-border/80 bg-card hover:bg-muted/80 text-sm font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/40 shadow-sm active:scale-[0.98] cursor-pointer group hover:border-primary/30"
+            >
+              <MicrosoftIcon className="h-5 w-5 shrink-0" />
+              <span>Continue with Microsoft Entra ID</span>
+            </button>
+
+            <div className="relative flex items-center justify-center">
+              <div className="border-t border-border/60 w-full" />
+              <span className="bg-background px-3 text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider relative z-10">
+                Or with email
+              </span>
+            </div>
           </div>
 
           {/* Form */}
