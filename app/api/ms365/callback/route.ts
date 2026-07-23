@@ -15,8 +15,9 @@ export async function GET(request: Request) {
   const { data } = await getSession();
 
   if (error) {
+    const origin = process.env.NEXT_PUBLIC_BASE_URL || url.origin;
     return NextResponse.redirect(
-      new URL(`/?ms365_error=${encodeURIComponent(error)}`, url.origin),
+      new URL(`/?ms365_error=${encodeURIComponent(error)}`, origin),
     );
   }
 
@@ -65,11 +66,11 @@ export async function GET(request: Request) {
       ms365User,
     });
 
-    return NextResponse.redirect(new URL("/?ms365=connected", url.origin));
+    return NextResponse.redirect(new URL("/?ms365=connected", origin));
   } catch (err) {
     console.error("[ms365] callback error:", err);
     return NextResponse.redirect(
-      new URL("/?ms365_error=Connection+failed.+Please+try+again.", url.origin),
+      new URL("/?ms365_error=Connection+failed.+Please+try+again.", origin),
     );
   }
 }

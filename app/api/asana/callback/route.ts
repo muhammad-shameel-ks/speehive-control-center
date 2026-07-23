@@ -12,8 +12,9 @@ export async function GET(request: Request) {
   const { data } = await getSession();
 
   if (error) {
+    const origin = process.env.NEXT_PUBLIC_BASE_URL || url.origin;
     return NextResponse.redirect(
-      new URL(`/?asana_error=${encodeURIComponent(error)}`, url.origin),
+      new URL(`/?asana_error=${encodeURIComponent(error)}`, origin),
     );
   }
 
@@ -37,7 +38,8 @@ export async function GET(request: Request) {
     );
   }
 
-  const redirectUri = `${url.origin}/api/asana/callback`;
+  const origin = process.env.NEXT_PUBLIC_BASE_URL || url.origin;
+  const redirectUri = `${origin}/api/asana/callback`;
 
   try {
     const tokens = await exchangeCodeForTokens(
@@ -53,11 +55,11 @@ export async function GET(request: Request) {
       state: undefined,
       codeVerifier: undefined,
     });
-    return NextResponse.redirect(new URL("/?asana=connected", url.origin));
+    return NextResponse.redirect(new URL("/?asana=connected", origin));
   } catch (err) {
     console.error("[asana] callback error:", err);
     return NextResponse.redirect(
-      new URL("/?asana_error=Connection+failed.+Please+try+again.", url.origin),
+      new URL("/?asana_error=Connection+failed.+Please+try+again.", origin),
     );
   }
 }

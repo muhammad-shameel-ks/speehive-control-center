@@ -19,7 +19,8 @@ export async function GET(request: Request) {
   await updateSession({ codeVerifier: verifier, state });
 
   const url = new URL(request.url);
-  const redirectUri = `${url.origin}/api/asana/callback`;
+  const origin = process.env.NEXT_PUBLIC_BASE_URL || url.origin;
+  const redirectUri = `${origin}/api/asana/callback`;
 
   const authorizeUrl = new URL(ASANA_AUTH_URL);
   authorizeUrl.searchParams.set("client_id", config.clientId);

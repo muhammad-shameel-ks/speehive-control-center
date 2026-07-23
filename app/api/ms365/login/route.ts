@@ -20,7 +20,8 @@ export async function GET(request: NextRequest) {
   const { data } = await getSession();
 
   if (data.ms365AccessToken) {
-    return NextResponse.redirect(new URL("/?ms365=connected", url.origin));
+    const origin = process.env.NEXT_PUBLIC_BASE_URL || url.origin;
+    return NextResponse.redirect(new URL("/?ms365=connected", origin));
   }
 
   const { verifier, challenge } = makePkcePair();
