@@ -69,6 +69,15 @@ Shared OAuth helpers live in `lib/oauth/pkce.ts`. Typed API wrappers live in `li
 
 - `searxng` — local proxy at `http://localhost:8080`.
 
+# How to verify standards
+
+Do not assume community standards or rely on training data alone — libraries and frameworks change fast. Before writing or reviewing code for any framework, library, SDK, or tool:
+
+1. **Use Context7** (context7-mcp skill) to fetch current documentation. Even for well-known libraries (React, Next.js, Tailwind, shadcn, Supabase, etc.), the docs may differ from training data.
+2. **Use web search** (searxng) to confirm the latest recommended pattern, especially for config files, auth flows, and CSP setup.
+3. **Read `node_modules/<pkg>/docs/` or source** when available locally — it is always the ground truth for the installed version.
+4. Never commit a pattern without verifying it against the above sources first.
+
 # Conventions worth knowing
 
 - `cookies()` is async. `headers()` too.
