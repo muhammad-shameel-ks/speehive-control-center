@@ -5,6 +5,7 @@ import {
   getServerMs365Config,
 } from "@/lib/ms365-oauth";
 import { getSession, updateSession } from "@/lib/session";
+import { log } from "@/lib/logger";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -68,7 +69,7 @@ export async function GET(request: Request) {
 
     return NextResponse.redirect(new URL("/?ms365=connected", origin));
   } catch (err) {
-    console.error("[ms365] callback error:", err);
+    log.asana.error("[ms365] callback error:", err);
     return NextResponse.redirect(
       new URL("/?ms365_error=Connection+failed.+Please+try+again.", origin),
     );

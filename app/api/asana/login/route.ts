@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAsanaServerConfig } from "@/lib/asana-server-config";
 import { makePkcePair, randomState } from "@/lib/oauth/pkce";
 import { updateSession } from "@/lib/session";
+import { log } from "@/lib/logger";
 
 const ASANA_AUTH_URL = "https://app.asana.com/-/oauth_authorize";
 
@@ -31,6 +32,6 @@ export async function GET(request: Request) {
   authorizeUrl.searchParams.set("code_challenge", challenge);
   authorizeUrl.searchParams.set("code_challenge_method", "S256");
 
-  console.log("[asana] initiating OAuth flow — no MCP resource param (REST API scope)");
+  log.asana.info("initiating OAuth flow — no MCP resource param (REST API scope)");
   return NextResponse.redirect(authorizeUrl);
 }

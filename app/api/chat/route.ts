@@ -8,6 +8,7 @@ import {
   type UIMessage,
 } from "ai";
 import { mimoV25 } from "@/lib/ai-provider";
+import { log } from "@/lib/logger";
 import { buildAsanaToolSet } from "@/lib/asana-tools";
 import { rateLimitFromCookie } from "@/lib/rate-limit";
 import { getValidAsanaToken } from "@/lib/session-helpers";
@@ -58,8 +59,8 @@ export async function POST(req: Request) {
     },
     onStepFinish: ({ toolCalls, toolResults, finishReason }) => {
       if (toolCalls.length > 0) {
-        console.log(
-          `[chat] step finished: toolCalls=${toolCalls.length} finishReason=${finishReason}`,
+        log.summary.info(
+          `step finished: toolCalls=${toolCalls.length} finishReason=${finishReason}`,
         );
       }
       if (toolResults.length > 0) {
@@ -69,7 +70,7 @@ export async function POST(req: Request) {
             typeof output === "string"
               ? output.slice(0, 120)
               : JSON.stringify(output)?.slice(0, 120);
-          console.log(`[chat] tool ${r.toolName} → ${preview}`);
+          log.summary.info(`tool ${r.toolName} → ${preview}`);
         }
       }
     },

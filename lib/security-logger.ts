@@ -18,6 +18,8 @@ interface SecurityLogEntry {
   metadata?: Record<string, unknown>;
 }
 
+import { log } from "@/lib/logger";
+
 export function logSecurityEvent(
   event: SecurityEvent,
   data: Omit<SecurityLogEntry, "event" | "timestamp"> = {},
@@ -28,7 +30,7 @@ export function logSecurityEvent(
     ...data,
   };
 
-  console.warn(`[SECURITY] ${event}`, JSON.stringify(entry));
+  log.security.warn(event, JSON.stringify(entry));
 }
 
 export function logAuthFailure(

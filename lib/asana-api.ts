@@ -1,6 +1,8 @@
 const ASANA_API_BASE = "https://app.asana.com/api/1.0";
 const ASANA_TOKEN_URL = "https://app.asana.com/-/oauth_token";
 
+import { log } from "@/lib/logger";
+
 export type AsanaTokens = {
   accessToken: string;
   refreshToken: string;
@@ -32,7 +34,7 @@ async function asanaFetch<T>(
 ): Promise<T> {
   const url = `${ASANA_API_BASE}${path}`;
   const start = Date.now();
-  console.log(`[asana] → ${init?.method ?? "GET"} ${path}`);
+  log.asana.info(`→ ${init?.method ?? "GET"} ${path}`);
 
   const res = await fetch(url, {
     ...init,
@@ -48,12 +50,12 @@ async function asanaFetch<T>(
 
   if (!res.ok) {
     const body = await res.text();
-    console.error(`[asana] ✗ ${res.status} ${path} (${elapsed}ms): ${body.slice(0, 200)}`);
+    log.asana.error(`✗ ${res.status} ${path} (${elapsed}ms): ${body.slice(0, 200)}`);
     throw new Error(`Asana API ${res.status}: ${body}`);
   }
 
   const json = (await res.json()) as { data: T; next_page?: { offset?: string } | null };
-  console.log(`[asana] ✓ ${path} (${elapsed}ms) — ${(JSON.stringify(json.data).length / 1024).toFixed(1)}KB`);
+  log.asana.info(`✓ ${path} (${elapsed}ms) — ${(JSON.stringify(json.data).length / 1024).toFixed(1)}KB`);
   return json.data;
 }
 
@@ -64,7 +66,7 @@ export async function exchangeCodeForTokens(
   config: OAuthConfig,
 ): Promise<AsanaTokens> {
   const start = Date.now();
-  console.log("[asana] → exchanging OAuth code for tokens");
+  log.asana.info("→ exchanging OAuth code for tokens");
 
   const body = new URLSearchParams({
     grant_type: "authorization_code",
@@ -83,7 +85,7 @@ export async function exchangeCodeForTokens(
 
   if (!res.ok) {
     const text = await res.text();
-    console.error(`[asana] ✗ token exchange failed (${res.status}): ${text.slice(0, 200)}`);
+    log.asana.error(`✗ token exchange failed (${res.status}): ${text.slice(0, 200)}`);
     throw new Error(`Token exchange failed (${res.status}): ${text}`);
   }
 
@@ -93,7 +95,7 @@ export async function exchangeCodeForTokens(
     expires_in: number;
   };
 
-  console.log(`[asana] ✓ tokens received (${Date.now() - start}ms) — expires in ${json.expires_in}s`);
+  log.asana.info(`✓ tokens received (${Date.now() - start}ms) — expires in ${json.expires_in}s`);
   return {
     accessToken: json.access_token,
     refreshToken: json.refresh_token,
@@ -106,7 +108,7 @@ export async function refreshAccessToken(
   config: OAuthConfig,
 ): Promise<AsanaTokens> {
   const start = Date.now();
-  console.log("[asana] → refreshing access token");
+  log.asana.info("→ refreshing access token");
 
   const body = new URLSearchParams({
     grant_type: "refresh_token",
@@ -123,7 +125,7 @@ export async function refreshAccessToken(
 
   if (!res.ok) {
     const text = await res.text();
-    console.error(`[asana] ✗ token refresh failed (${res.status}): ${text.slice(0, 200)}`);
+    log.asana.error(`✗ token refresh failed (${res.status}): ${text.slice(0, 200)}`);
     throw new Error(`Token refresh failed (${res.status}): ${text}`);
   }
 
@@ -133,7 +135,7 @@ export async function refreshAccessToken(
     expires_in: number;
   };
 
-  console.log(`[asana] ✓ tokens refreshed (${Date.now() - start}ms) — expires in ${json.expires_in}s`);
+  log.asana.info(`✓ tokens refreshed (${Date.now() - start}ms) — expires in ${json.expires_in}s`);
   return {
     accessToken: json.access_token,
     refreshToken: json.refresh_token,

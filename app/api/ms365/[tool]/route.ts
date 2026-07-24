@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { MS365_PANELS } from "@/lib/ms365-graph";
 import { getServerMs365Config, refreshAccessToken } from "@/lib/ms365-oauth";
 import { getSession, updateSession, type Ms365User } from "@/lib/session";
+import { log } from "@/lib/logger";
 
 type Ctx = { params: Promise<{ tool: string }> };
 
@@ -54,7 +55,13 @@ function formatMailAsText(data: unknown): string {
       const subject = m.subject ?? "(no subject)";
       const htmlContent = m.body?.content ?? "";
       const plainBody = htmlContent
-        ? htmlContent.replace(/<[^>]*>/g, "").replace(/\r\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim()
+        ? htmlContent
+            .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+            .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+            .replace(/<[^>]*>/g, "")
+            .replace(/\r\n/g, "\n")
+            .replace(/\n{3,}/g, "\n\n")
+            .trim()
         : (m.bodyPreview ?? "");
       const date = m.receivedDateTime
         ? new Date(m.receivedDateTime).toLocaleDateString("en-US", { month: "short", day: "numeric" })
@@ -200,7 +207,7 @@ export async function GET(req: NextRequest, ctx: Ctx) {
         ms365ExpiresAt: refreshed.expiresAt,
       });
     } catch (err) {
-      console.error("[ms365] token refresh failed:", err);
+      log.asana.error("[ms365] token refresh failed:", err);
       return NextResponse.json({
         state: "unauthorized",
         error: "Token refresh failed. Please reconnect Microsoft 365.",
@@ -235,7 +242,7 @@ export async function GET(req: NextRequest, ctx: Ctx) {
       messageCount,
     });
   } catch (err) {
-    console.error("[ms365] fetch error:", err);
+    log.asana.error("[ms365] fetch error:", err);
     return NextResponse.json({
       state: "error",
       error: "Failed to fetch data. Please try again.",

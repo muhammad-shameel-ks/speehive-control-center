@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { getAsanaConfig, syncAsana, postAsanaTool } from "@/lib/integrations/api-client";
 import type { AsanaConnectionState, AsanaTask } from "@/lib/types/integrations";
 import { DEFAULT_ASANA_WORKSPACE_GID } from "@/lib/types/integrations";
+import { log } from "@/lib/logger";
 
 export function useAsanaConnection() {
   const [state, setState] = useState<AsanaConnectionState>({ status: "loading", workspaceGid: null });
@@ -30,9 +31,9 @@ export function useAsanaConnection() {
                   setState((s) => ({ ...s, workspaceGid: firstWithWorkspace.workspace!.gid }));
                 }
               }
-              console.log(`[asana] initial load: ${parsed?.length ?? 0} tasks, result type: ${typeof result}, isArray: ${Array.isArray(result)}`);
+              log.asana.info(`initial load: ${parsed?.length ?? 0} tasks, result type: ${typeof result}, isArray: ${Array.isArray(result)}`);
             } else {
-              console.log("[asana] initial sync failed:", res.state, (res as { error?: string }).error);
+              log.asana.warn("initial sync failed:", res.state, (res as { error?: string }).error);
             }
           });
         } else {
@@ -83,7 +84,7 @@ export function useAsanaConnection() {
           arguments: { task_gid: gid, completed: !currentlyCompleted },
         });
       } catch (err) {
-        console.error("Failed to update task status in Asana:", err);
+        log.asana.error("Failed to update task status in Asana:", err);
       }
     },
     [tasks],
@@ -106,7 +107,7 @@ export function useAsanaConnection() {
         }
       }
     } catch (err) {
-      console.error("Failed to fetch Asana workspaces:", err);
+      log.asana.error("Failed to fetch Asana workspaces:", err);
     }
     return DEFAULT_ASANA_WORKSPACE_GID;
   }, [state.workspaceGid, tasks]);
@@ -130,7 +131,7 @@ export function useAsanaConnection() {
         }
         return false;
       } catch (err) {
-        console.error("Failed to create Asana task:", err);
+        log.asana.error("Failed to create Asana task:", err);
         return false;
       }
     },

@@ -8,6 +8,73 @@ import { PlusIcon, SparklesIcon } from "@/components/icons";
 import type { ParsedEmail } from "@/lib/types/briefing";
 import type { EmailDigestRef } from "@/lib/integrations/api-client";
 
+function sanitizeEmailHtml(rawHtml: string): string {
+  if (!rawHtml) return "";
+  return rawHtml
+    .replace(/<script\b[\s\S]*?<\/script>/gi, "")
+    .replace(/\son\w+="[^"]*"/gi, "")
+    .replace(/\son\w+='[^']*'/gi, "")
+    .replace(/(href|src)\s*=\s*"javascript:[^"]*"/gi, '$1="#"')
+    .replace(/(href|src)\s*=\s*'javascript:[^']*'/gi, "$1='#'");
+}
+
+function prepareEmailHtml(rawHtml: string): string {
+  if (!rawHtml) return "";
+
+  let content = sanitizeEmailHtml(rawHtml);
+
+  if (/&lt;[a-z!]/i.test(content) && !/<[a-z!]/i.test(content)) {
+    content = content
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&amp;/g, "&");
+  }
+
+  const baseAndStyle = `
+    <base target="_blank">
+    <style>
+      :root { color-scheme: light dark; }
+      html, body {
+        background-color: Canvas;
+        color: CanvasText;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+        margin: 0;
+        padding: 24px;
+        line-height: 1.5;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+      }
+      img {
+        max-width: 100% !important;
+        height: auto !important;
+      }
+      table {
+        max-width: 100%;
+      }
+      blockquote {
+        margin: 1em 0;
+        padding-left: 1em;
+        border-left: 3px solid color-mix(in srgb, CanvasText 20%, transparent);
+      }
+      a { color: -webkit-link; }
+    </style>
+  `;
+
+  const hasHead = /<head[^>]*>/i.test(content);
+  if (hasHead) {
+    return content.replace(/<head[^>]*>/i, (match) => `${match}${baseAndStyle}`);
+  }
+
+  const hasHtml = /<html[^>]*>/i.test(content);
+  if (hasHtml) {
+    return content.replace(/<html[^>]*>/i, (match) => `${match}<head>${baseAndStyle}</head>`);
+  }
+
+  return `<!DOCTYPE html><html><head><meta charset="utf-8">${baseAndStyle}</head><body>${content}</body></html>`;
+}
+
 export function BriefingMailPage({
   parsedEmails,
   initialEmail,
@@ -115,20 +182,23 @@ export function BriefingMailPage({
               </div>
 
               <div className="flex-1 overflow-hidden">
-                {selected.html ? (
-                  <iframe
-                    srcDoc={selected.html}
-                    sandbox="allow-same-origin"
-                    className="w-full h-full border-0"
-                    title="Email content"
-                  />
-                ) : (
-                  <div className="h-full overflow-y-auto px-6 py-5">
-                    <p className="text-[13px] text-foreground/80 leading-relaxed whitespace-pre-wrap">
-                      {selected.raw}
-                    </p>
-                  </div>
-                )}
+                {(() => {
+                  const htmlToRender = selected.html || (/<[a-z][\s\S]*>/i.test(selected.raw) ? selected.raw : null);
+                  return htmlToRender ? (
+                    <iframe
+                      srcDoc={prepareEmailHtml(htmlToRender)}
+                      sandbox="allow-popups allow-popups-to-escape-sandbox"
+                      className="w-full h-full border-0 bg-background"
+                      title="Email content"
+                    />
+                  ) : (
+                    <div className="h-full overflow-y-auto px-6 py-5">
+                      <p className="text-[13px] text-foreground/80 leading-relaxed whitespace-pre-wrap">
+                        {selected.raw}
+                      </p>
+                    </div>
+                  );
+                })()}
               </div>
 
               <div className="px-6 py-4 border-t border-border shrink-0 flex items-center gap-3">

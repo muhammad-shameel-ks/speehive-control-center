@@ -55,7 +55,7 @@ export function EmailPanel({
     >
       <div
         className="h-[3px] shrink-0"
-        style={{ background: "linear-gradient(90deg, var(--panel-email) 0%, #7BBFE8 100%)" }}
+        style={{ background: "linear-gradient(90deg, var(--panel-email) 0%, var(--panel-email-stop) 100%)" }}
       />
 
       <div className="flex items-center justify-between px-4 h-11 border-b border-border shrink-0">

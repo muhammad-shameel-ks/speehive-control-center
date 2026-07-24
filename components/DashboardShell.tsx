@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTheme } from "next-themes";
 import { Sidebar, type DashboardTab } from "@/components/dashboard/Sidebar";
 import { Header } from "@/components/dashboard/Header";
 import { EmailPanel } from "@/components/dashboard/panels/EmailPanel";
@@ -26,16 +25,14 @@ import { refreshAllIntegrations } from "@/lib/integrations/refresh-all";
 import { TodosModal } from "@/components/notes/TodosModal";
 import { CommandPalette } from "@/components/dashboard/CommandPalette";
 import { ToastContainer } from "@/components/ui/ToastContainer";
+import { setThemeCookie, type Theme } from "@/app/actions";
 
-export function DashboardShell({}: { searchParams?: { asana?: string; asana_error?: string; ms365?: string; ms365_error?: string } }) {
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMounted(true);
-  }, []);
-  const resolvedTheme: "dark" | "light" = mounted ? (theme as "dark" | "light") ?? "dark" : "dark";
-
+export function DashboardShell({
+  theme,
+}: {
+  searchParams?: { asana?: string; asana_error?: string; ms365?: string; ms365_error?: string };
+  theme: Theme;
+}) {
   const [activeTab, setActiveTab] = useState<DashboardTab>("dashboard");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -134,8 +131,12 @@ export function DashboardShell({}: { searchParams?: { asana?: string; asana_erro
           isRefreshing={isRefreshingAll}
           canRefresh={canRefreshAll}
           onRefresh={handleRefresh}
-          resolvedTheme={resolvedTheme}
-          onToggleTheme={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+          theme={theme}
+          onToggleTheme={async () => {
+            const next: Theme = theme === "dark" ? "light" : "dark";
+            document.documentElement.classList.toggle("dark", next === "dark");
+            await setThemeCookie(next);
+          }}
           userEmail={userEmail}
           onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
         />
@@ -270,7 +271,7 @@ export function DashboardShell({}: { searchParams?: { asana?: string; asana_erro
       <ChatDrawer
         open={isChatOpen}
         onClose={() => setIsChatOpen(false)}
-        resolvedTheme={resolvedTheme}
+        theme={theme}
         initialInput={chatInitialInput}
         onInputSetUsed={() => setChatInitialInput("")}
       />
@@ -350,8 +351,12 @@ export function DashboardShell({}: { searchParams?: { asana?: string; asana_erro
         onOpenCreateTask={() => mutations.openCreate()}
         onOpenNotes={() => setIsNotesOpen(true)}
         onTabChange={setActiveTab}
-        resolvedTheme={resolvedTheme}
-        onToggleTheme={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+        theme={theme}
+        onToggleTheme={async () => {
+          const next: Theme = theme === "dark" ? "light" : "dark";
+          document.documentElement.classList.toggle("dark", next === "dark");
+          await setThemeCookie(next);
+        }}
       />
 
       <ToastContainer />

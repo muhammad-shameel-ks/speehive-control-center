@@ -1,4 +1,6 @@
+import { cookies } from "next/headers";
 import { DashboardShell } from "@/components/DashboardShell";
+import type { Theme } from "@/app/actions";
 
 type SearchParams = Promise<{
   asana?: string;
@@ -12,7 +14,8 @@ export default async function Home({
 }: {
   searchParams: SearchParams;
 }) {
-  const sp = await searchParams;
+  const [sp, store] = await Promise.all([searchParams, cookies()]);
+  const theme: Theme = store.get("theme")?.value === "light" ? "light" : "dark";
 
-  return <DashboardShell searchParams={sp} />;
+  return <DashboardShell searchParams={sp} theme={theme} />;
 }

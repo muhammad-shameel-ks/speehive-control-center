@@ -2,7 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:where(.dark, .dark *));
 @source "../app/**/*.{ts,tsx}";
 @source "../components/**/*.{ts,tsx}";
 @source not "../supabase-project/**";
@@ -90,6 +90,12 @@
   --panel-chat: #3CBFAC;
   --panel-tasks: #60C83A;
   --panel-calendar: #C5DE18;
+
+  /* Lighter stops used in panel header gradients */
+  --panel-email-stop: #7BBFE8;
+  --panel-chat-stop: #6BD3C1;
+  --panel-tasks-stop: #7AD958;
+  --panel-calendar-stop: #D5EE48;
 }
 
 /* ─── DARK MODE ───────────────────────────────────────────────────────────── */
@@ -137,6 +143,11 @@
   --panel-chat: #4DCBB8;
   --panel-tasks: #72D94B;
   --panel-calendar: #D5EE28;
+
+  --panel-email-stop: #8ABDEF;
+  --panel-chat-stop: #6FDDCC;
+  --panel-tasks-stop: #8AE66A;
+  --panel-calendar-stop: #E0F158;
 }
 
 /* ─── BASE ────────────────────────────────────────────────────────────────── */

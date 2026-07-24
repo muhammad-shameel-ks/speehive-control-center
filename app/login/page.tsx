@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useTheme } from "next-themes";
 import { createClient } from "@/lib/supabase/client";
 import { SpeeHiveMark, MicrosoftIcon } from "@/components/icons";
+import { setThemeCookie, type Theme } from "@/app/actions";
 import { 
   Mail, 
   Lock, 
@@ -22,8 +22,12 @@ import {
 
 export default function LoginPage() {
   const router = useRouter();
-  const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [theme, setThemeState] = useState<Theme>(() =>
+    typeof document !== "undefined" && document.documentElement.classList.contains("dark")
+      ? "dark"
+      : "dark",
+  );
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -135,7 +139,18 @@ export default function LoginPage() {
     }
   }
 
-  const resolvedTheme = mounted ? theme ?? "dark" : "dark";
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
+
+  const resolvedTheme: Theme = mounted ? theme : "dark";
+  const toggleTheme = () => {
+    const next: Theme = resolvedTheme === "dark" ? "light" : "dark";
+    document.documentElement.classList.toggle("dark", next === "dark");
+    setThemeState(next);
+    setThemeCookie(next);
+  };
 
   return (
     <div className="min-h-screen flex bg-background text-foreground font-sans transition-colors duration-300">
@@ -241,7 +256,7 @@ export default function LoginPage() {
           <div className="ml-auto">
             {mounted && (
               <button
-                onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+                onClick={toggleTheme}
                 className="p-2.5 rounded-xl border border-border bg-card hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/40 shadow-sm"
                 aria-label="Toggle theme"
               >

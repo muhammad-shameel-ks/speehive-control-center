@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { generateUnifiedSummary } from "@/lib/integrations/api-client";
 import type { DigestRef, EmailDigestRef, TaskDigestRef } from "@/lib/integrations/api-client";
 import type { ConnectionStatus } from "@/lib/types/integrations";
+import { log } from "@/lib/logger";
 
 type SummaryState = {
   text: string | null;
@@ -52,7 +53,7 @@ export function useSummaries(opts: {
   const [chat, setChat] = useState<SummaryState>(initialState(true));
   const [tasksSummary, setTasksSummary] = useState<SummaryState>(initialState(true));
   const [globalText, setGlobalText] = useState<string | null>(null);
-  const [globalLoading, setGlobalLoading] = useState(false);
+  const [globalLoading, setGlobalLoading] = useState(true);
   const [globalCollapsed, setGlobalCollapsed] = useState(false);
   const [chatRefs, setChatRefs] = useState<DigestRef[]>([]);
   const [globalRefs, setGlobalRefs] = useState<(DigestRef | null)[]>([]);
@@ -113,7 +114,7 @@ export function useSummaries(opts: {
         // ignore storage quota errors
       }
     } catch (err) {
-      console.error("Failed to generate unified summary:", err);
+      log.summary.error("Failed to generate unified summary:", err);
       setEmail((s) => ({ ...s, loading: false, error: true }));
       setChat((s) => ({ ...s, loading: false, error: true }));
       setTasksSummary((s) => ({ ...s, loading: false, error: true }));
@@ -158,7 +159,7 @@ export function useSummaries(opts: {
         }
       }
     } catch {
-      console.warn("Failed to parse summary cache from localStorage");
+      log.summary.warn("Failed to parse summary cache from localStorage");
     }
 
     // Debounce API calls by 1 second

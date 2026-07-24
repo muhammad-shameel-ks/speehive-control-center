@@ -1,3 +1,5 @@
+import { log } from "@/lib/logger";
+
 const buckets = new Map<string, number[]>();
 
 export type RateLimitResult = {
@@ -21,7 +23,7 @@ export function rateLimit(
   const recent = existing.filter((t) => t > cutoff);
   if (recent.length >= limit) {
     const oldest = recent[0];
-    console.warn(`[SECURITY] rate_limit.exceeded key=${key} limit=${limit}`);
+    log.rateLimit.warn(`key=${key} limit=${limit}`);
     return {
       allowed: false,
       remaining: 0,

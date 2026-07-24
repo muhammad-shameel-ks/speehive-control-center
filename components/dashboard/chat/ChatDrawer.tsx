@@ -2,17 +2,18 @@
 
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import { CloseIcon } from "@/components/icons";
+import type { Theme } from "@/app/actions";
 
 export function ChatDrawer({
   open,
   onClose,
-  resolvedTheme,
+  theme,
   initialInput,
   onInputSetUsed,
 }: {
   open: boolean;
   onClose: () => void;
-  resolvedTheme: "dark" | "light";
+  theme: Theme;
   initialInput: string;
   onInputSetUsed: () => void;
 }) {
@@ -32,7 +33,7 @@ export function ChatDrawer({
           </button>
         </div>
         <div className="flex-1 overflow-hidden">
-          <ChatPanel theme={resolvedTheme} initialInput={initialInput} onInputSetUsed={onInputSetUsed} />
+          <ChatPanel theme={theme} initialInput={initialInput} onInputSetUsed={onInputSetUsed} />
         </div>
       </div>
 

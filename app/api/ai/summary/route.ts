@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { mimoV25 } from "@/lib/ai-provider";
 import { rateLimitFromCookie } from "@/lib/rate-limit";
 import { parseEmails } from "@/lib/parser";
+import { log } from "@/lib/logger";
 
 export const maxDuration = 60;
 
@@ -54,7 +55,7 @@ async function generateValidatedSummary(prompt: string) {
 
     const raw = result.text;
     if (!raw) {
-      console.warn(`[ai/summary] model returned empty text on attempt=${attempt + 1}`);
+      log.summary.warn(`model returned empty text on attempt=${attempt + 1}`);
       continue;
     }
 
@@ -63,17 +64,17 @@ async function generateValidatedSummary(prompt: string) {
       const json = JSON.parse(repaired);
       const parsed = SummarySchema.safeParse(json);
       if (parsed.success) {
-        console.log(
-          `[ai/summary] parse OK on attempt=${attempt + 1} usage=${JSON.stringify(result.usage ?? null)}`,
+        log.summary.info(
+          `parse OK on attempt=${attempt + 1} usage=${JSON.stringify(result.usage ?? null)}`,
         );
         return parsed.data;
       }
-      console.warn(
-        `[ai/summary] Zod validation failed on attempt=${attempt + 1}: ${parsed.error.message}`,
+      log.summary.warn(
+        `Zod validation failed on attempt=${attempt + 1}: ${parsed.error.message}`,
       );
     } catch (e) {
-      console.warn(
-        `[ai/summary] JSON.parse failed on attempt=${attempt + 1}: ${e instanceof Error ? e.message : e}`,
+      log.summary.warn(
+        `JSON.parse failed on attempt=${attempt + 1}: ${e instanceof Error ? e.message : e}`,
       );
     }
   }
@@ -172,7 +173,7 @@ export async function POST(req: Request) {
       const { emailContent, chatContent, tasksContent } = body;
       const formattedEmails = formatEmailsForAI(emailContent || "");
       const formattedChat = formatChatForAI(chatContent || "");
-      console.log(`[ai/summary] Unified request received. emailLen=${formattedEmails.length}, chatLen=${formattedChat.length}, tasksLen=${tasksContent?.length ?? 0}`);
+      log.summary.info(`Unified request received. emailLen=${formattedEmails.length}, chatLen=${formattedChat.length}, tasksLen=${tasksContent?.length ?? 0}`);
 
       const prompt = `You are a notification triage assistant for an IT Lead Manager. Your job is to produce a quick TLDR of what OTHERS have sent, requested, or escalated — NOT what the user has done.
 
@@ -224,7 +225,7 @@ Example input tasks:
 Example output:
 {"emailSummary":"- [Alice] needs sign-off on the vendor contract by EOD","chatSummary":"- Bob reports staging server is down","tasksSummary":"- 1 task pending: sign vendor contract","globalDigest":"- [TEAMS] Bob reports staging server is down","chatRefs":[{"chatId":"19:thread_alpha","messageIndex":1}],"globalRefs":[{"chatId":"19:thread_alpha","messageIndex":1}],"emailRefs":[{"emailId":"ms365-mail-0"}],"taskRefs":[{"taskGid":"12345"}]}`;
 
-      console.log(`[ai/summary] Calling generateText for unified summary`);
+      log.summary.info("Calling generateText for unified summary");
       const parsed = await generateValidatedSummary(prompt);
 
       return NextResponse.json({
@@ -241,10 +242,10 @@ Example output:
 
     // Legacy single summary format
     const { type, content } = body;
-    console.log(`[ai/summary] type=${type} contentLen=${typeof content === "string" ? content.length : typeof content}`);
+    log.summary.info(`type=${type} contentLen=${typeof content === "string" ? content.length : typeof content}`);
 
     if (!content || typeof content !== "string" || content.trim() === "") {
-      console.log(`[ai/summary] SKIP — empty content for type=${type}`);
+      log.summary.info(`SKIP — empty content for type=${type}`);
       return NextResponse.json({ summary: "No data available to summarize." });
     }
 
@@ -282,20 +283,20 @@ Example output:
       return NextResponse.json({ error: "Invalid summary type" }, { status: 400 });
     }
 
-    console.log(`[ai/summary] calling model for type=${type} promptLen=${prompt.length}`);
+    log.summary.info(`calling model for type=${type} promptLen=${prompt.length}`);
     const result = await generateText({
       model: mimoV25,
       prompt,
       maxOutputTokens: 8000,
     });
     const { text, usage, finishReason, warnings } = result;
-    console.log(`[ai/summary] OK type=${type} outputLen=${text.trim().length} finishReason=${finishReason} usage=${JSON.stringify(usage)} warnings=${JSON.stringify(warnings ?? null)}`);
+    log.summary.info(`OK type=${type} outputLen=${text.trim().length} finishReason=${finishReason} usage=${JSON.stringify(usage)} warnings=${JSON.stringify(warnings ?? null)}`);
 
     const trimmed = text.trim();
-    if (!trimmed) console.warn(`[ai/summary] model returned empty text for type=${type}`);
+    if (!trimmed) log.summary.warn(`model returned empty text for type=${type}`);
     return NextResponse.json({ summary: trimmed });
   } catch (err) {
-    console.error(`[ai/summary] ERROR:`, err);
+    log.summary.error(`ERROR:`, err);
     return NextResponse.json(
       { error: "An internal error occurred. Please try again." },
       { status: 500 },

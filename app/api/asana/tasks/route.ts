@@ -8,6 +8,7 @@ import {
   refreshAccessToken,
 } from "@/lib/asana-api";
 import { getSession, updateSession } from "@/lib/session";
+import { log } from "@/lib/logger";
 
 const ALLOWED_ASANA_TOOLS = new Set<string>([
   "get_my_tasks",
@@ -22,7 +23,7 @@ async function getValidToken(): Promise<
   | { ok: false; response: NextResponse }
 > {
   const { data } = await getSession();
-  console.log("[asana:tasks] session check:", {
+  log.tasks.info("session check:", {
     hasAccessToken: !!data.accessToken,
     hasRefreshToken: !!data.refreshToken,
     expiresAt: data.expiresAt,
@@ -61,7 +62,7 @@ async function getValidToken(): Promise<
       });
       return { ok: true, accessToken: refreshed.accessToken };
     } catch (err) {
-      console.error("[asana:tasks] token refresh failed:", err);
+      log.tasks.error("token refresh failed:", err);
       return {
         ok: false,
         response: NextResponse.json({
@@ -76,13 +77,13 @@ async function getValidToken(): Promise<
 }
 
 export async function GET() {
-  console.log("[asana:tasks] GET — fetching tasks");
+  log.tasks.info("GET — fetching tasks");
   const auth = await getValidToken();
   if (!auth.ok) {
-    console.log("[asana:tasks] GET — auth failed, returning:", auth.response.status);
+    log.tasks.info("GET — auth failed, returning:", auth.response.status);
     return auth.response;
   }
-  console.log("[asana:tasks] GET — auth ok, fetching workspaces/tasks");
+  log.tasks.info("GET — auth ok, fetching workspaces/tasks");
 
   try {
     const { data: session } = await getSession();
@@ -101,10 +102,10 @@ export async function GET() {
     }
 
     const tasks = await getMyTasks(auth.accessToken, workspaceGid);
-    console.log(`[asana:tasks] GET — returning ${tasks.length} tasks`);
+    log.tasks.info(`GET — returning ${tasks.length} tasks`);
     return NextResponse.json({ state: "connected" as const, result: tasks });
   } catch (err) {
-    console.error("[asana:tasks] GET — error:", err);
+    log.tasks.error("GET — error:", err);
     return NextResponse.json({
       state: "error" as const,
       error: "Failed to fetch tasks. Please try again.",
@@ -114,7 +115,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   const { toolName, arguments: toolArgs } = await req.json();
-  console.log(`[asana:tasks] POST — tool: ${toolName}`);
+  log.tasks.info(`POST — tool: ${toolName}`);
 
   if (!toolName) {
     return NextResponse.json({ error: "Missing toolName" }, { status: 400 });
@@ -178,7 +179,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ state: "connected" as const, result });
   } catch (err) {
-    console.error(`[asana:tasks] POST — ${toolName} error:`, err);
+    log.tasks.error(`POST — ${toolName} error:`, err);
     return NextResponse.json(
       {
         state: "error" as const,

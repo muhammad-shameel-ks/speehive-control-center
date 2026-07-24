@@ -5,13 +5,14 @@ import { useClock } from "@/hooks/useClock";
 import { RefreshIcon, SunIcon, MoonIcon, SearchIcon } from "@/components/icons";
 import { createClient } from "@/lib/supabase/client";
 import type { DashboardTab } from "@/components/dashboard/Sidebar";
+import type { Theme } from "@/app/actions";
 
 export function Header({
   activeTab,
   isRefreshing,
   canRefresh,
   onRefresh,
-  resolvedTheme,
+  theme,
   onToggleTheme,
   userEmail,
   onOpenCommandPalette,
@@ -20,7 +21,7 @@ export function Header({
   isRefreshing: boolean;
   canRefresh: boolean;
   onRefresh: () => void;
-  resolvedTheme: "dark" | "light";
+  theme: Theme;
   onToggleTheme: () => void;
   userEmail?: string;
   onOpenCommandPalette?: () => void;
@@ -91,7 +92,7 @@ export function Header({
           className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
           aria-label="Toggle theme"
         >
-          {resolvedTheme === "dark" ? <SunIcon className="h-4 w-4" /> : <MoonIcon className="h-4 w-4" />}
+          {theme === "dark" ? <SunIcon className="h-4 w-4" /> : <MoonIcon className="h-4 w-4" />}
         </button>
 
         <div className="h-5 w-px bg-border" />

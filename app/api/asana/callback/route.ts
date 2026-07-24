@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAsanaServerConfig } from "@/lib/asana-server-config";
 import { exchangeCodeForTokens } from "@/lib/asana-api";
 import { getSession, updateSession } from "@/lib/session";
+import { log } from "@/lib/logger";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -57,7 +58,7 @@ export async function GET(request: Request) {
     });
     return NextResponse.redirect(new URL("/?asana=connected", origin));
   } catch (err) {
-    console.error("[asana] callback error:", err);
+    log.asana.error("callback error:", err);
     return NextResponse.redirect(
       new URL("/?asana_error=Connection+failed.+Please+try+again.", origin),
     );

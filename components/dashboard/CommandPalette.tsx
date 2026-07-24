@@ -14,6 +14,7 @@ import {
   CloseIcon,
 } from "@/components/icons";
 import { showToast } from "@/components/ui/ToastContainer";
+import type { Theme } from "@/app/actions";
 
 export type CommandAction = {
   id: string;
@@ -33,7 +34,7 @@ type CommandPaletteProps = {
   onOpenCreateTask: () => void;
   onOpenNotes: () => void;
   onTabChange: (tab: "dashboard" | "settings") => void;
-  resolvedTheme: "dark" | "light";
+  theme: Theme;
   onToggleTheme: () => void;
 };
 
@@ -45,7 +46,7 @@ export function CommandPalette({
   onOpenCreateTask,
   onOpenNotes,
   onTabChange,
-  resolvedTheme,
+  theme,
   onToggleTheme,
 }: CommandPaletteProps) {
   const [query, setQuery] = useState("");
@@ -131,14 +132,14 @@ export function CommandPalette({
       {
         id: "toggle-theme",
         category: "Theme",
-        title: `Switch to ${resolvedTheme === "dark" ? "Light" : "Dark"} Mode`,
+        title: `Switch to ${theme === "dark" ? "Light" : "Dark"} Mode`,
         description: "Toggle app color scheme",
-        icon: resolvedTheme === "dark" ? SunIcon : MoonIcon,
+        icon: theme === "dark" ? SunIcon : MoonIcon,
         perform: () => {
           onToggleTheme();
           showToast({
             type: "success",
-            title: `Switched to ${resolvedTheme === "dark" ? "Light" : "Dark"} Mode`,
+            title: `Switched to ${theme === "dark" ? "Light" : "Dark"} Mode`,
           });
           onClose();
         },
@@ -150,10 +151,10 @@ export function CommandPalette({
       onOpenCreateTask,
       onOpenNotes,
       onTabChange,
-      resolvedTheme,
+      theme,
       onToggleTheme,
       onClose,
-    ]
+    ],
   );
 
   const filteredActions = useMemo(() => {
