@@ -291,7 +291,8 @@ export default function LoginPage() {
             </button>
           </div>
 
-          {/* Microsoft Entra ID OAuth Sign-In */}
+          {/* Microsoft Entra ID OAuth — disabled until redirect URI domain is verified */}
+          {/*
           <div className="space-y-4">
             <button
               type="button"
@@ -309,6 +310,14 @@ export default function LoginPage() {
                 Or with email
               </span>
             </div>
+          </div>
+          */}
+
+          <div className="relative flex items-center justify-center">
+            <div className="border-t border-border/60 w-full" />
+            <span className="bg-background px-3 text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider relative z-10">
+              Or with email
+            </span>
           </div>
 
           {/* Form */}

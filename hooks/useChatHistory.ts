@@ -48,16 +48,19 @@ function saveMessages(messages: UIMessage[]): void {
 }
 
 export function useChatHistory() {
-  const [hydrated] = useState(() => loadMessages());
-  const hydratedRef = useRef(false);
+  const [messages, setMessages] = useState<UIMessage[]>([]);
+  const [ready, setReady] = useState(false);
+  const mountedRef = useRef(false);
 
   useEffect(() => {
-    hydratedRef.current = true;
+    mountedRef.current = true;
+    setMessages(loadMessages());
+    setReady(true);
   }, []);
 
-  function persist(messages: UIMessage[]): void {
-    if (!hydratedRef.current) return;
-    saveMessages(messages);
+  function persist(msgs: UIMessage[]): void {
+    if (!mountedRef.current) return;
+    saveMessages(msgs);
   }
 
   function clear(): void {
@@ -66,9 +69,10 @@ export function useChatHistory() {
   }
 
   return {
-    messages: hydrated,
+    messages,
     persist,
     clear,
-    hasHistory: hydrated.length > 0,
+    ready,
+    hasHistory: ready && messages.length > 0,
   };
 }

@@ -2,16 +2,12 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type DynamicToolUIPart, type UIMessage } from "ai";
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useChatHistory } from "@/hooks/useChatHistory";
 import { CheckIcon, CopyIcon } from "@/components/icons";
 
-const emptySubscribe = () => () => {};
-function useIsMounted() {
-  return useSyncExternalStore(emptySubscribe, () => true, () => false);
-}
 
 function isDynamicToolPart(
   part: UIMessage["parts"][number],
@@ -288,12 +284,11 @@ export function ChatPanel({
   initialInput?: string;
   onInputSetUsed?: () => void;
 }) {
-  const { messages: initialHistory, persist, clear, hasHistory } = useChatHistory();
-  const mounted = useIsMounted();
+  const { messages: initialHistory, persist, clear, ready, hasHistory } = useChatHistory();
   const { messages, sendMessage, status, error, stop, setMessages } = useChat({
     id: "speehive-chat",
     transport: new DefaultChatTransport({ api: "/api/chat" }),
-    messages: initialHistory,
+    messages: ready ? initialHistory : [],
   });
 
   useEffect(() => {
@@ -360,7 +355,7 @@ export function ChatPanel({
             Ask about your tasks, emails, and workspace
           </p>
         </div>
-        {mounted && hasHistory && (
+        {hasHistory && (
           <button
             type="button"
             onClick={onClear}
